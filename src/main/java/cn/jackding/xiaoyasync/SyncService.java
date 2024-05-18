@@ -19,11 +19,11 @@ import java.net.URLEncoder;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -48,7 +48,7 @@ public class SyncService {
 
     private final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-    private final ExecutorService executorService = Executors.newFixedThreadPool(100);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(49);
 
     @Scheduled(cron = "0 0 6,18 * * ?")
     public void syncFiles() {
@@ -115,6 +115,7 @@ public class SyncService {
         }
 
         // 下载或者更新文件
+        System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "49");
         remoteFiles.parallelStream().forEach(file -> {
 
             if (file.endsWith("/")) {
