@@ -7,4 +7,4 @@ services:
     environment:
       TZ: Asia/Shanghai
     volumes:
-      - /volume1/docker/alist-strm/data:/data
+      - /volume1/docker-data/xiaoya/xiaoya:/data
