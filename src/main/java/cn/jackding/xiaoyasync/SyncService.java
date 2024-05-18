@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
@@ -52,11 +53,11 @@ public class SyncService {
 
     @Scheduled(cron = "0 0 6,18 * * ?")
     public void syncFiles() {
-        CopyOnWriteArrayList<String> downloadFiles=new CopyOnWriteArrayList<>();
+        CopyOnWriteArrayList<String> downloadFiles = new CopyOnWriteArrayList<>();
         long currentTimeMillis = System.currentTimeMillis();
         try {
             log.info("媒体库同步任务开始");
-            syncFilesRecursively(baseUrl, localDir, "",downloadFiles);
+            syncFilesRecursively(baseUrl, localDir, "", downloadFiles);
         } catch (Exception e) {
             log.warn("媒体库同步任务失败");
             log.error("", e);
@@ -87,7 +88,7 @@ public class SyncService {
 
     }
 
-    private void syncFilesRecursively(String currentUrl, String localDir, String relativePath,List<String> downloadFiles) {
+    private void syncFilesRecursively(String currentUrl, String localDir, String relativePath, List<String> downloadFiles) {
         //获取网站上面的目录文件
         Set<String> remoteFiles = fetchFileList(currentUrl);
         Set<String> localFiles = new HashSet<>();
@@ -121,7 +122,7 @@ public class SyncService {
             if (file.endsWith("/")) {
                 String localDirName = file.replace("/", "").replaceAll("[\\\\/:*?\"<>|]", "_");
                 // It's a directory, recursively sync
-                syncFilesRecursively(currentUrl + encode(file.replace("/", "")).replace("+", "%20") + "/", currentLocalDir + localDirName, relativePath + file,downloadFiles);
+                syncFilesRecursively(currentUrl + encode(file.replace("/", "")).replace("+", "%20") + "/", currentLocalDir + localDirName, relativePath + file, downloadFiles);
             } else {
                 String localFileName = file.replaceAll("[\\\\/:*?\"<>|]", "_");
                 if (!localFiles.contains(localFileName) || isRemoteFileUpdated(currentUrl, currentLocalDir, encode(file).replace("+", "%20"), localFileName)) {
@@ -180,6 +181,7 @@ public class SyncService {
 
     private Set<String> fetchFileList(String url) {
         log.info("开始获取网站文件目录：{}", url);
+        String decodeUrl = decode(url);
         Set<String> files = new HashSet<>();
         //如果失败尝试获取三次
         for (int i = 0; ; i++) {
@@ -196,14 +198,14 @@ public class SyncService {
                         files.add(file);
                     }
                 }
-                log.info("获取网站文件目录成功：{}", url);
+                log.info("获取网站文件目录成功：{}", decodeUrl);
                 return files;
             } catch (IOException e) {
                 if (i < 2) {
-                    log.warn("第{}次获取{}失败", i + 1, url);
+                    log.warn("第{}次获取{}失败", i + 1, decodeUrl);
                     sleep(1);
                 } else {
-                    log.warn("第{}次获取{}还是失败，放弃", i + 1, url);
+                    log.warn("第{}次获取{}还是失败，放弃", i + 1, decodeUrl);
                     log.error("", e);
                     throw new RuntimeException(e);
                 }
@@ -211,7 +213,7 @@ public class SyncService {
         }
     }
 
-    private void downloadFile(String currentUrl, String localDir, String file, String localFileName,List<String> downloadFiles) {
+    private void downloadFile(String currentUrl, String localDir, String file, String localFileName, List<String> downloadFiles) {
         URL website;
         HttpURLConnection connection;
         try {
@@ -236,11 +238,12 @@ public class SyncService {
                 downloadFiles.add(localDir.endsWith(File.separator) ? localDir : localDir + File.separator + localFileName);
                 break;
             } catch (IOException e) {
+                String decodeCurrentUrl = decode(currentUrl);
                 if (i < 2) {
-                    log.warn("第{}次下载{}失败", i + 1, currentUrl + localFileName);
+                    log.warn("第{}次下载{}失败", i + 1, decodeCurrentUrl + localFileName);
                     sleep(1);
                 } else {
-                    log.warn("第{}次下载{}还是失败，放弃", i + 1, currentUrl + localFileName);
+                    log.warn("第{}次下载{}还是失败，放弃", i + 1, decodeCurrentUrl + localFileName);
                     log.warn("下载文件失败localDir:{} Download fail: {}", localDir, localFileName);
                     log.error("", e);
                     break;
@@ -279,6 +282,15 @@ public class SyncService {
     private String encode(String str) {
         try {
             return URLEncoder.encode(str, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            log.error("", e);
+        }
+        return str;
+    }
+
+    private String decode(String str) {
+        try {
+            return URLDecoder.decode(str, "UTF-8");
         } catch (UnsupportedEncodingException e) {
             log.error("", e);
         }
