@@ -48,7 +48,7 @@ public class SyncService {
 
     private final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-    private final ExecutorService executorService = Executors.newFixedThreadPool(49);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     @Scheduled(cron = "0 0 6,18 * * ?")
     public void syncFiles() {
@@ -115,7 +115,7 @@ public class SyncService {
         }
 
         // 下载或者更新文件
-        System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "49");
+        System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "99");
         remoteFiles.parallelStream().forEach(file -> {
 
             if (file.endsWith("/")) {
