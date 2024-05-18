@@ -1,0 +1,10 @@
+version: "3"
+services:
+  app:
+    container_name: xiaoya-sync
+    image: 'jacksaoding/xiaoya-sync:latest'
+    network_mode: "host"
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - /volume1/docker/alist-strm/data:/data
