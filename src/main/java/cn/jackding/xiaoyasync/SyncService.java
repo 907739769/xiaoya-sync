@@ -49,7 +49,7 @@ public class SyncService {
 
     private final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-    private final ExecutorService executorService = Executors.newFixedThreadPool(10);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(19);
 
     @Scheduled(cron = "0 0 6,18 * * ?")
     public void syncFiles() {
