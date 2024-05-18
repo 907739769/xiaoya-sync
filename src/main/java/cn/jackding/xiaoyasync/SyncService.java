@@ -115,7 +115,7 @@ public class SyncService {
         }
 
         // 下载或者更新文件
-        System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "99");
+        System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "199");
         remoteFiles.parallelStream().forEach(file -> {
 
             if (file.endsWith("/")) {
