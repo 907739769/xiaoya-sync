@@ -5,4 +5,4 @@ LABEL authors="JackDing"
 COPY ./target/application.jar /application.jar
 VOLUME /data
 ENV TZ=Asia/Shanghai
-ENTRYPOINT ["java -jar -Xms128m -Xmx512m /application.jar"]
+ENTRYPOINT ["sh","-c","java -jar -Xms128m -Xmx512m /application.jar"]
