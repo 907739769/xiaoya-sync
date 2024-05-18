@@ -48,7 +48,7 @@ public class SyncService {
 
     private final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-    private final ExecutorService executorService = Executors.newFixedThreadPool(10);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(100);
 
     @Scheduled(cron = "0 0 6,18 * * ?")
     public void syncFiles() {
@@ -70,7 +70,7 @@ public class SyncService {
             // 等待所有任务完成或超时（这里设置超时时间为 1 小时）
             if (!executorService.awaitTermination(1, TimeUnit.HOURS)) {
                 // 如果超时，输出提示信息
-                log.error("下载任务超过1小时超时，放弃");
+                log.error("剩余文件下载任务超过1小时超时，放弃");
             }
             log.info("下载剩下的文件完成");
         } catch (InterruptedException e) {
@@ -90,7 +90,6 @@ public class SyncService {
     private void syncFilesRecursively(String currentUrl, String localDir, String relativePath,List<String> downloadFiles) {
         //获取网站上面的目录文件
         Set<String> remoteFiles = fetchFileList(currentUrl);
-//        log.info("currentUrl:{} remoteFiles:{}", currentUrl, remoteFiles);
         Set<String> localFiles = new HashSet<>();
         //本地路径加上分隔符
         String currentLocalDir = localDir.endsWith(File.separator) ? localDir : localDir + File.separator;
@@ -114,8 +113,6 @@ public class SyncService {
                 localFiles.add(file.getName());
             }
         }
-//        log.info("currentLocalDir:{} localFiles:{}", currentLocalDir, localFiles);
-
 
         // 下载或者更新文件
         remoteFiles.parallelStream().forEach(file -> {
