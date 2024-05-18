@@ -21,9 +21,11 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -43,8 +45,6 @@ public class SyncService {
 
     @Value("#{'${sync.syncList}'.split(',')}")
     private List<String> syncList;
-
-    private final Random random = new Random(4);
 
     private final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
@@ -201,7 +201,7 @@ public class SyncService {
             } catch (IOException e) {
                 if (i < 2) {
                     log.warn("第{}次获取{}失败", i + 1, url);
-                    sleep(2);
+                    sleep(1);
                 } else {
                     log.warn("第{}次获取{}还是失败，放弃", i + 1, url);
                     log.error("", e);
@@ -214,7 +214,6 @@ public class SyncService {
     private void downloadFile(String currentUrl, String localDir, String file, String localFileName,List<String> downloadFiles) {
         URL website;
         HttpURLConnection connection;
-        sleep(random.nextInt(3));
         try {
             website = new URL(currentUrl + file);
             connection = (HttpURLConnection) website.openConnection();
@@ -239,7 +238,7 @@ public class SyncService {
             } catch (IOException e) {
                 if (i < 2) {
                     log.warn("第{}次下载{}失败", i + 1, currentUrl + localFileName);
-                    sleep(2);
+                    sleep(1);
                 } else {
                     log.warn("第{}次下载{}还是失败，放弃", i + 1, currentUrl + localFileName);
                     log.warn("下载文件失败localDir:{} Download fail: {}", localDir, localFileName);
@@ -287,11 +286,11 @@ public class SyncService {
     }
 
     private void sleep(long l) {
-//        try {
-//            TimeUnit.SECONDS.sleep(l);
-//        } catch (InterruptedException e) {
-//            log.error("", e);
-//        }
+        try {
+            TimeUnit.SECONDS.sleep(l);
+        } catch (InterruptedException e) {
+            log.error("", e);
+        }
     }
 
 }
