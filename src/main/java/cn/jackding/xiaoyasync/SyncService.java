@@ -306,6 +306,7 @@ public class SyncService {
             URL url = new URL(baseUrl + file);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("HEAD");
+            connection.setRequestProperty("User-Agent", userAgent);
             long remoteLastModified = connection.getLastModified();
 
             File localFile = new File(localDir, localFileName);
