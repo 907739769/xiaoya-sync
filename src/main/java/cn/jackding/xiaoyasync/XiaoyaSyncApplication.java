@@ -23,7 +23,6 @@ public class XiaoyaSyncApplication {
     @Bean
     CommandLineRunner run(SyncService syncService) {
         return args -> {
-            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "199");
             if ("1".equals(runAfterStartup)) {
                 syncService.syncFiles();
             } else {
