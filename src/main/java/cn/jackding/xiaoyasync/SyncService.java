@@ -56,7 +56,6 @@ public class SyncService {
 
     @Scheduled(cron = "0 0 6,18 * * ?")
     public void syncFiles() {
-        System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "199");
         CopyOnWriteArrayList<String> downloadFiles = new CopyOnWriteArrayList<>();
         long currentTimeMillis = System.currentTimeMillis();
         try {
@@ -95,7 +94,6 @@ public class SyncService {
                 log.info("没有新的内容更新");
             }
             log.info("媒体库同步任务全部完成耗时：{}ms", System.currentTimeMillis() - currentTimeMillis);
-            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "4");
         }
 
     }
