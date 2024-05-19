@@ -45,7 +45,7 @@ public class SyncService {
     @Value("${mediaLibDir}")
     private String localDir;
 
-    private final List<String> syncList= Arrays.asList("每日更新/.*,电影/2023/.*,纪录片（已刮削）/.*,音乐/演唱会/.*,音乐/狄更斯：音乐剧 (2023)/.*".split(","));
+    private final List<String> syncList = Arrays.asList("每日更新/.*,电影/2023/.*,纪录片（已刮削）/.*,音乐/演唱会/.*,音乐/狄更斯：音乐剧 (2023)/.*".split(","));
 
     private final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
@@ -79,11 +79,15 @@ public class SyncService {
             log.error("下载剩下的文件被中断");
             log.error("", e);
         } finally {
-            log.info("以下是下载的文件");
-            for (String fileName : downloadFiles) {
-                log.info(fileName);
+            if (!downloadFiles.isEmpty()) {
+                log.info("以下是下载的文件");
+                for (String fileName : downloadFiles) {
+                    log.info(fileName);
+                }
+                log.info("以上是下载的文件");
+            } else {
+                log.info("没有新的内容更新");
             }
-            log.info("以上是下载的文件");
             log.info("媒体库同步任务全部完成耗时：{}ms", System.currentTimeMillis() - currentTimeMillis);
         }
 
