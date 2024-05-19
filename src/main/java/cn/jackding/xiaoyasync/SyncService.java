@@ -313,15 +313,6 @@ public class SyncService {
         }
     }
 
-    public static void main(String[] args) throws Exception {
-        URL url = new URL("https://emby.xiaoya.pro/%E6%AF%8F%E6%97%A5%E6%9B%B4%E6%96%B0/%E7%94%B5%E5%BD%B1/%E4%B8%AD%E5%9B%BD/93%E5%9B%BD%E9%99%85%E5%88%97%E8%BD%A6%E5%A4%A7%E5%8A%AB%E6%A1%88%EF%BC%9A%E8%8E%AB%E6%96%AF%E7%A7%91%E8%A1%8C%E5%8A%A8/folder.jpg");
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("HEAD");
-        long remoteLastModified = connection.getLastModified();
-        Date lastModifiedDate = new Date(remoteLastModified);
-        System.out.println(lastModifiedDate);
-    }
-
     private String encode(String str) {
         try {
             return URLEncoder.encode(str, "UTF-8");
