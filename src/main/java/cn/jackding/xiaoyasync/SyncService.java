@@ -127,6 +127,7 @@ public class SyncService {
         // 下载或者更新文件
         remoteFiles.parallelStream().forEach(file -> {
 
+            log.info("排除路径：{}", relativePath + file);
             //不在排除列表里面
             if (!exclude(relativePath + file)) {
                 if (file.endsWith("/")) {
