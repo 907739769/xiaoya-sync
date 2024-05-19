@@ -7,4 +7,5 @@ VOLUME /data
 ENV TZ=Asia/Shanghai
 ENV runAfterStartup="1"
 ENV excludeList=""
-ENTRYPOINT ["sh","-c","java -jar -Xms128m -Xmx2048m /application.jar"]
+ENV threadPoolNum="199"
+ENTRYPOINT ["sh","-c","java -jar -Xms128m -Xmx4095m /application.jar"]

@@ -27,6 +27,7 @@
 /volume1/docker-data/xiaoya/xiaoya修改成媒体库路径
 runAfterStartup  启动是否立即执行默认1启用，不启用填0
 excludeList 排除列表 默认为空 不进行同步及删除的目录例如每日更新/动漫/.*,每日更新/动漫剧场版/.*
+threadPoolNum 设置线程数默认199，设置越大占用内存CPU越高，同步速度相应会快一些
 ```
 
 docker CLI安装
@@ -38,6 +39,7 @@ docker run -d \
 -e TZ=Asia/Shanghai \
 -e runAfterStartup=1 \
 -e excludeList="" \
+-e threadPoolNum="199" \
 -v /volume1/docker-data/xiaoya/xiaoya:/data \
 jacksaoding/xiaoya-sync:latest
 ```
@@ -55,6 +57,7 @@ services:
       TZ: Asia/Shanghai
       runAfterStartup: 1
       excludeList: ""
+      threadPoolNum: 199
     volumes:
       - /volume1/docker-data/xiaoya/xiaoya:/data
 ```
