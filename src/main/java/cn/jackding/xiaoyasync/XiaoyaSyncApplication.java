@@ -1,5 +1,6 @@
 package cn.jackding.xiaoyasync;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -10,6 +11,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class XiaoyaSyncApplication {
 
+    @Value("${runAfterStartup:1}")
+    private String runAfterStartup;
+
     public static void main(String[] args) {
         SpringApplication.run(XiaoyaSyncApplication.class, args);
     }
@@ -17,7 +21,9 @@ public class XiaoyaSyncApplication {
     @Bean
     CommandLineRunner run(SyncService syncService) {
         return args -> {
-            syncService.syncFiles();
+            if ("1".equals(runAfterStartup)) {
+                syncService.syncFiles();
+            }
         };
     }
 

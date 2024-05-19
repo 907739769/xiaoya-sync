@@ -15,9 +15,9 @@
 ```
 
 # 开发计划
-1.增加启动是否执行任务的开关
-2.增加增量更新，确认可行性
-3.
+- [x] 1.增加启动是否执行任务的开关
+- [ ] 2.增加增量更新，确认可行性
+- [ ] 3...
 
 ## docker部署 
 
@@ -25,6 +25,7 @@
 ```
 部署前参数需要修改
 /volume1/docker-data/xiaoya/xiaoya修改成媒体库路径
+runAfterStartup  启动是否立即执行默认1启用，不启用填0
 ```
 
 docker CLI安装
@@ -33,6 +34,7 @@ docker CLI安装
 docker run -d \
 --name=xiaoya-sync \
 -e TZ=Asia/Shanghai \
+-e runAfterStartup=1 \
 -v /volume1/docker-data/xiaoya/xiaoya:/data \
 jacksaoding/xiaoya-sync:latest
 ```
@@ -48,6 +50,7 @@ services:
     network_mode: "host"
     environment:
       TZ: Asia/Shanghai
+      runAfterStartup: 1
     volumes:
       - /volume1/docker-data/xiaoya/xiaoya:/data
 ```

@@ -6,5 +6,6 @@ services:
     network_mode: "host"
     environment:
       TZ: Asia/Shanghai
+      runAfterStartup: 1
     volumes:
       - /volume1/docker-data/xiaoya/xiaoya:/data
