@@ -151,14 +151,14 @@ public class SyncService {
                 return file.replace("/", "").replaceAll("[\\\\/:*?\"<>|]", "_") + "/";
             } else {
                 //去掉特殊字符  去掉后缀，防止删除同名的nfo等文件
-                return file.replaceAll("[\\\\/:*?\"<>|]", "_").substring(0, file.lastIndexOf('.'));
+                return file.replaceAll("[\\\\/:*?\"<>|]", "_").substring(0, file.contains(".") ? file.lastIndexOf('.') : file.length());
             }
         }).collect(Collectors.toSet());
 
         // 删除网站上面不存在的本地文件 本地有但是网站上没有的文件 只会删除名单中的文件和文件夹
         for (String file : localFiles) {
             if (!file.endsWith("/")) {
-                file = file.substring(0, file.lastIndexOf('.'));
+                file = file.contains(".") ? file.substring(0, file.lastIndexOf('.')) : file;
             }
             //远程没有本地这个文件名称  而且在处理列表里面  不在排除列表里面
             if (!remoteFiles.contains(file) && shouldDelete(relativePath + file) && !exclude(relativePath + file)) {
