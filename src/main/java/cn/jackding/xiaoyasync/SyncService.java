@@ -76,8 +76,9 @@ public class SyncService {
             if (!executorService.awaitTermination(1, TimeUnit.HOURS)) {
                 // 如果超时，输出提示信息
                 log.error("剩余文件下载任务超过1小时超时，放弃");
+            } else {
+                log.info("下载剩下的文件完成");
             }
-            log.info("下载剩下的文件完成");
         } catch (InterruptedException e) {
             // 如果等待过程中发生中断，输出错误信息
             log.error("下载剩下的文件被中断");
@@ -130,9 +131,9 @@ public class SyncService {
             //不在排除列表里面
             if (!exclude(relativePath + file)) {
                 if (file.endsWith("/")) {
-                    String localDirName = file.replace("/", "").replaceAll("[\\\\/:*?\"<>|]", "_");
-                    // It's a directory, recursively sync
-                    syncFilesRecursively(currentUrl + encode(file.replace("/", "")).replace("+", "%20") + "/", currentLocalDir + localDirName, relativePath + file, downloadFiles);
+                    String localDirName = file.substring(0, file.length() - 1).replaceAll("[\\\\/:*?\"<>|]", "_");
+                    // 如果是文件夹  递归调用自身方法
+                    syncFilesRecursively(currentUrl + encode(file.substring(0, file.length() - 1)).replace("+", "%20") + "/", currentLocalDir + localDirName, relativePath + file, downloadFiles);
                 } else {
                     String localFileName = file.replaceAll("[\\\\/:*?\"<>|]", "_");
                     if (!localFiles.contains(localFileName) || isRemoteFileUpdated(currentUrl, currentLocalDir, encode(file).replace("+", "%20"), localFileName)) {
