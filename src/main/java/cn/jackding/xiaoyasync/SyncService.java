@@ -142,17 +142,21 @@ public class SyncService {
             if (file.endsWith("/")) {
                 return file.replace("/", "").replaceAll("[\\\\/:*?\"<>|]", "_") + "/";
             } else {
-                return file.replaceAll("[\\\\/:*?\"<>|]", "_");
+                //去掉特殊字符  去掉后缀，防止删除同名的nfo等文件
+                return file.replaceAll("[\\\\/:*?\"<>|]", "_").substring(0, file.lastIndexOf('.'));
             }
         }).collect(Collectors.toSet());
 
         // 删除网站上面不存在的本地文件 本地有但是网站上没有的文件 只会删除名单中的文件和文件夹
         for (String file : localFiles) {
+            if (!file.endsWith("/")) {
+                file = file.substring(0, file.lastIndexOf('.'));
+            }
             if (!remoteFiles.contains(file) && shouldDelete(relativePath + file)) {
                 File localFile = new File(currentLocalDir, file);
                 if (localFile.isDirectory()) {
                     deleteDirectory(localFile);
-                    if (localFile.exists()) {
+                    if (!localFile.exists()) {
                         log.info("删除过时文件夹成功currentLocalDir:{} Delete fail: {}", currentLocalDir, file);
                     } else {
                         log.warn("删除过时文件夹失败currentLocalDir:{} Deleted: {}", currentLocalDir, file);
