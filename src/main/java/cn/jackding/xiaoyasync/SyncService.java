@@ -52,7 +52,7 @@ public class SyncService {
 
     private final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-    private final ExecutorService executorService = Executors.newFixedThreadPool(19);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     @Scheduled(cron = "0 0 6,18 * * ?")
     public void syncFiles() {
@@ -127,7 +127,6 @@ public class SyncService {
         // 下载或者更新文件
         remoteFiles.parallelStream().forEach(file -> {
 
-            log.info("排除路径：{}", relativePath + file);
             //不在排除列表里面
             if (!exclude(relativePath + file)) {
                 if (file.endsWith("/")) {
@@ -141,7 +140,7 @@ public class SyncService {
                     }
                 }
             } else {
-                log.info("排除路径：{}", relativePath + file);
+                log.info("排除路径不处理：{}", relativePath + file);
             }
         });
 

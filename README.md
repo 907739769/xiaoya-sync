@@ -26,7 +26,7 @@
 部署前参数需要修改
 /volume1/docker-data/xiaoya/xiaoya修改成媒体库路径
 runAfterStartup  启动是否立即执行默认1启用，不启用填0
-excludeList 排除列表 默认为空 不进行同步及删除的目录例如/每日更新/动漫/.*,/每日更新/动漫剧场版/.*
+excludeList 排除列表 默认为空 不进行同步及删除的目录例如每日更新/动漫/.*,每日更新/动漫剧场版/.*
 ```
 
 docker CLI安装
