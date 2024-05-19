@@ -155,10 +155,6 @@ public class SyncService {
             }
         }).collect(Collectors.toSet());
 
-        log.info("remoteFiles:{}",remoteFiles);
-        log.info("localFiles:{}",localFiles);
-
-
         // 删除网站上面不存在的本地文件 本地有但是网站上没有的文件 只会删除名单中的文件和文件夹
         for (String file : localFiles) {
             String fileName = file;
