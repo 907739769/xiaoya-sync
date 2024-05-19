@@ -71,7 +71,7 @@ public class SyncService {
         try {
             log.info("媒体库同步任务开始");
             log.info("排除列表：{}", excludeList);
-            syncFilesRecursively(baseUrl + syncDir, currentLocalDir + syncDir.replace("/", File.separator), syncDir, downloadFiles);
+            syncFilesRecursively(baseUrl + encode(syncDir).replace("+", "%20"), currentLocalDir + syncDir.replace("/", File.separator).replaceAll("[:*?\"<>|]", "_"), syncDir, downloadFiles);
         } catch (Exception e) {
             log.warn("媒体库同步任务失败");
             log.error("", e);
