@@ -157,11 +157,12 @@ public class SyncService {
 
         // 删除网站上面不存在的本地文件 本地有但是网站上没有的文件 只会删除名单中的文件和文件夹
         for (String file : localFiles) {
+            String fileName = file;
             if (!file.endsWith("/")) {
-                file = file.contains(".") ? file.substring(0, file.lastIndexOf('.')) : file;
+                fileName = file.contains(".") ? file.substring(0, file.lastIndexOf('.')) : file;
             }
             //远程没有本地这个文件名称  而且在处理列表里面  不在排除列表里面
-            if (!remoteFiles.contains(file) && shouldDelete(relativePath + file) && !exclude(relativePath + file)) {
+            if (!remoteFiles.contains(fileName) && shouldDelete(relativePath + file) && !exclude(relativePath + file)) {
                 File localFile = new File(currentLocalDir, file);
                 if (localFile.isDirectory()) {
                     deleteDirectory(localFile);
