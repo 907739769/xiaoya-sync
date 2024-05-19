@@ -5,13 +5,33 @@
 同步小雅emby媒体库，每天早上晚上六点同步，服务启动也会执行一次。扫描一次大概10分钟。
 
 自动删除本地过时文件夹及文件（小雅媒体库网站不存在的文件及文件夹，不会删除其他目录的文件），
-只会同步以下指定文件夹：
+https://emby.xiaoya.pro/
+
+上面这个同步以下指定文件夹：
 ```
 每日更新/
 电影/2023/
 纪录片（已刮削）/
 音乐/演唱会/
 音乐/狄更斯：音乐剧 (2023)/
+```
+
+https://icyou.eu.org/
+
+https://lanyuewan.cn/
+
+以上两个网站会同步以下指定目录
+
+```
+每日更新/
+电影/.
+纪录片（已刮削）/
+音乐/
+PikPak/
+动漫/
+电视剧/
+纪录片/
+综艺/
 ```
 
 # 开发计划
@@ -28,6 +48,7 @@
 runAfterStartup  启动是否立即执行默认1启用，不启用填0
 excludeList 排除列表 默认为空 不进行同步及删除的目录例如每日更新/动漫/.*,每日更新/动漫剧场版/.*
 threadPoolNum 设置线程数默认199，设置越大占用内存CPU越高，同步速度相应会快一些
+syncUrl 同步网站 默认https://emby.xiaoya.pro/  可选https://icyou.eu.org/或者https://lanyuewan.cn/
 ```
 
 docker CLI安装
@@ -40,6 +61,7 @@ docker run -d \
 -e runAfterStartup=1 \
 -e excludeList="" \
 -e threadPoolNum="199" \
+-e syncUrl="https://emby.xiaoya.pro/" \
 -v /volume1/docker-data/xiaoya/xiaoya:/data \
 jacksaoding/xiaoya-sync:latest
 ```
@@ -58,6 +80,7 @@ services:
       runAfterStartup: 1
       excludeList: ""
       threadPoolNum: 199
+      syncUrl: "https://emby.xiaoya.pro/"
     volumes:
       - /volume1/docker-data/xiaoya/xiaoya:/data
 ```

@@ -20,10 +20,7 @@ import java.net.URLEncoder;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -39,7 +36,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SyncService {
 
-    @Value("${sync.url}")
+    @Value("${syncUrl}")
     private String baseUrl;
 
     @Value("${mediaLibDir}")
@@ -48,7 +45,10 @@ public class SyncService {
     @Value("#{'${excludeList}'.split(',')}")
     private List<String> excludeList;
 
-    private final List<String> syncList = Arrays.asList("每日更新/.*,电影/2023/.*,纪录片（已刮削）/.*,音乐/演唱会/.*,音乐/狄更斯：音乐剧 (2023)/.*".split(","));
+    //在这个列表里面的就会执行删除操作
+    private List<String> syncList = Arrays.asList("每日更新/.*,电影/2023/.*,纪录片（已刮削）/.*,音乐/演唱会/.*,音乐/狄更斯：音乐剧 (2023)/.*".split(","));
+
+    private final List<String> allBaseUrl = Arrays.asList("https://icyou.eu.org/,https://lanyuewan.cn/".split(","));
 
     private final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
@@ -56,6 +56,11 @@ public class SyncService {
 
     @Scheduled(cron = "0 0 6,18 * * ?")
     public void syncFiles() {
+        baseUrl = baseUrl.endsWith("/") ? localDir : localDir + "/";
+        //如果是这两个网站 同步的文件会多一些
+        if (allBaseUrl.contains(baseUrl)) {
+            syncList = Arrays.asList("每日更新/.*,电影/.*,纪录片（已刮削）/.*,音乐/.*,PikPak/.*,动漫/.*,电视剧/.*,纪录片/.*,综艺/.*".split(","));
+        }
         CopyOnWriteArrayList<String> downloadFiles = new CopyOnWriteArrayList<>();
         long currentTimeMillis = System.currentTimeMillis();
         try {
@@ -306,6 +311,15 @@ public class SyncService {
             log.error("", e);
             return false;
         }
+    }
+
+    public static void main(String[] args) throws Exception {
+        URL url = new URL("https://emby.xiaoya.pro/%E6%AF%8F%E6%97%A5%E6%9B%B4%E6%96%B0/%E7%94%B5%E5%BD%B1/%E4%B8%AD%E5%9B%BD/93%E5%9B%BD%E9%99%85%E5%88%97%E8%BD%A6%E5%A4%A7%E5%8A%AB%E6%A1%88%EF%BC%9A%E8%8E%AB%E6%96%AF%E7%A7%91%E8%A1%8C%E5%8A%A8/folder.jpg");
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("HEAD");
+        long remoteLastModified = connection.getLastModified();
+        Date lastModifiedDate = new Date(remoteLastModified);
+        System.out.println(lastModifiedDate);
     }
 
     private String encode(String str) {
