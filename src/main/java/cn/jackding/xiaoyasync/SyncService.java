@@ -42,6 +42,9 @@ public class SyncService {
     @Value("${mediaLibDir}")
     private String localDir;
 
+    @Value("${syncDir}")
+    private String syncDir;
+
     @Value("#{'${excludeList}'.split(',')}")
     private List<String> excludeList;
 
@@ -57,6 +60,8 @@ public class SyncService {
     @Scheduled(cron = "0 0 6,18 * * ?")
     public void syncFiles() {
         baseUrl = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
+        //本地路径加上分隔符
+        String currentLocalDir = localDir.endsWith(File.separator) ? localDir : localDir + File.separator;
         //如果是这两个网站 同步的文件会多一些
         if (allBaseUrl.contains(baseUrl)) {
             syncList = Arrays.asList("每日更新/.*,电影/.*,纪录片（已刮削）/.*,音乐/.*,PikPak/.*,动漫/.*,电视剧/.*,纪录片/.*,综艺/.*".split(","));
@@ -66,7 +71,7 @@ public class SyncService {
         try {
             log.info("媒体库同步任务开始");
             log.info("排除列表：{}", excludeList);
-            syncFilesRecursively(baseUrl, localDir, "", downloadFiles);
+            syncFilesRecursively(baseUrl + syncDir, currentLocalDir + syncDir.replace("/", File.separator), syncDir, downloadFiles);
         } catch (Exception e) {
             log.warn("媒体库同步任务失败");
             log.error("", e);
