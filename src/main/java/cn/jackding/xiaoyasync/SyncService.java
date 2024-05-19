@@ -60,6 +60,7 @@ public class SyncService {
         long currentTimeMillis = System.currentTimeMillis();
         try {
             log.info("媒体库同步任务开始");
+            log.info("排除列表：{}", excludeList);
             syncFilesRecursively(baseUrl, localDir, "", downloadFiles);
         } catch (Exception e) {
             log.warn("媒体库同步任务失败");
@@ -139,6 +140,8 @@ public class SyncService {
                         executorService.submit(() -> downloadFile(currentUrl, currentLocalDir, encode(file).replace("+", "%20"), localFileName, downloadFiles));
                     }
                 }
+            } else {
+                log.info("排除路径：{}", relativePath + file);
             }
         });
 
