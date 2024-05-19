@@ -45,6 +45,9 @@ public class SyncService {
     @Value("${mediaLibDir}")
     private String localDir;
 
+    @Value("#{'${excludeList}'.split(',')}")
+    private List<String> excludeList;
+
     private final List<String> syncList = Arrays.asList("每日更新/.*,电影/2023/.*,纪录片（已刮削）/.*,音乐/演唱会/.*,音乐/狄更斯：音乐剧 (2023)/.*".split(","));
 
     private final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -124,14 +127,17 @@ public class SyncService {
         System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "199");
         remoteFiles.parallelStream().forEach(file -> {
 
-            if (file.endsWith("/")) {
-                String localDirName = file.replace("/", "").replaceAll("[\\\\/:*?\"<>|]", "_");
-                // It's a directory, recursively sync
-                syncFilesRecursively(currentUrl + encode(file.replace("/", "")).replace("+", "%20") + "/", currentLocalDir + localDirName, relativePath + file, downloadFiles);
-            } else {
-                String localFileName = file.replaceAll("[\\\\/:*?\"<>|]", "_");
-                if (!localFiles.contains(localFileName) || isRemoteFileUpdated(currentUrl, currentLocalDir, encode(file).replace("+", "%20"), localFileName)) {
-                    executorService.submit(() -> downloadFile(currentUrl, currentLocalDir, encode(file).replace("+", "%20"), localFileName, downloadFiles));
+            //不在排除列表里面
+            if (!exclude(relativePath + file)) {
+                if (file.endsWith("/")) {
+                    String localDirName = file.replace("/", "").replaceAll("[\\\\/:*?\"<>|]", "_");
+                    // It's a directory, recursively sync
+                    syncFilesRecursively(currentUrl + encode(file.replace("/", "")).replace("+", "%20") + "/", currentLocalDir + localDirName, relativePath + file, downloadFiles);
+                } else {
+                    String localFileName = file.replaceAll("[\\\\/:*?\"<>|]", "_");
+                    if (!localFiles.contains(localFileName) || isRemoteFileUpdated(currentUrl, currentLocalDir, encode(file).replace("+", "%20"), localFileName)) {
+                        executorService.submit(() -> downloadFile(currentUrl, currentLocalDir, encode(file).replace("+", "%20"), localFileName, downloadFiles));
+                    }
                 }
             }
         });
@@ -152,7 +158,8 @@ public class SyncService {
             if (!file.endsWith("/")) {
                 file = file.substring(0, file.lastIndexOf('.'));
             }
-            if (!remoteFiles.contains(file) && shouldDelete(relativePath + file)) {
+            //远程没有本地这个文件名称  而且在处理列表里面  不在排除列表里面
+            if (!remoteFiles.contains(file) && shouldDelete(relativePath + file) && !exclude(relativePath + file)) {
                 File localFile = new File(currentLocalDir, file);
                 if (localFile.isDirectory()) {
                     deleteDirectory(localFile);
@@ -264,6 +271,15 @@ public class SyncService {
 
     private boolean shouldDelete(String relativePath) {
         for (String pattern : syncList) {
+            if (relativePath.matches(pattern)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean exclude(String relativePath) {
+        for (String pattern : excludeList) {
             if (relativePath.matches(pattern)) {
                 return true;
             }

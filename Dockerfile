@@ -6,4 +6,5 @@ COPY ./target/application.jar /application.jar
 VOLUME /data
 ENV TZ=Asia/Shanghai
 ENV runAfterStartup="1"
+ENV excludeList=""
 ENTRYPOINT ["sh","-c","java -jar -Xms128m -Xmx2048m /application.jar"]
