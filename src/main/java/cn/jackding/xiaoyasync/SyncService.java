@@ -148,7 +148,7 @@ public class SyncService {
         //处理成和本地一样的格式 好对比 不然不好对比 本地对特殊字符处理了
         remoteFiles = remoteFiles.stream().map(file -> {
             if (file.endsWith("/")) {
-                return file.replace("/", "").replaceAll("[\\\\/:*?\"<>|]", "_") + "/";
+                return file.substring(0, file.length() - 1).replaceAll("[\\\\/:*?\"<>|]", "_") + "/";
             } else {
                 //去掉特殊字符  去掉后缀，防止删除同名的nfo等文件
                 return file.replaceAll("[\\\\/:*?\"<>|]", "_").substring(0, file.contains(".") ? file.lastIndexOf('.') : file.length());
@@ -254,7 +254,7 @@ public class SyncService {
             ) {
                 fileChannel.transferFrom(rbc, 0, Long.MAX_VALUE);
                 log.info("下载文件成功localDir:{} Downloaded: {}", localDir, localFileName);
-                downloadFiles.add(localDir.endsWith(File.separator) ? localDir : localDir + File.separator + localFileName);
+                downloadFiles.add(localDir.endsWith(File.separator) ? localDir + localFileName : localDir + File.separator + localFileName);
                 break;
             } catch (IOException e) {
                 String decodeCurrentUrl = decode(currentUrl);
