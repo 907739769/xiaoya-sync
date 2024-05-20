@@ -25,7 +25,10 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -59,7 +62,7 @@ public class SyncService {
     private final ExecutorService executorService = Executors.newFixedThreadPool(4);
 
     @Autowired
-    private ForkJoinPool pool;
+    private ExecutorService pool;
 
     @Scheduled(cron = "0 0 6,18 * * ?")
     public void syncFiles() {
@@ -81,35 +84,35 @@ public class SyncService {
             log.error("", e);
             return;
         } finally {
-            pool.shutdown();
-            executorService.shutdown();
-            log.info("媒体库同步任务耗时：{}ms", System.currentTimeMillis() - currentTimeMillis);
+//            pool.shutdown();
+//            executorService.shutdown();
+//            log.info("媒体库同步任务耗时：{}ms", System.currentTimeMillis() - currentTimeMillis);
         }
-        log.info("媒体库同步任务完成，正在下载剩下的文件");
-        try {
+//        log.info("媒体库同步任务完成，正在下载剩下的文件");
+//        try {
             // 等待所有任务完成或超时（这里设置超时时间为 1 小时）
-            if (!executorService.awaitTermination(1, TimeUnit.HOURS) && pool.awaitTermination(1, TimeUnit.HOURS)) {
-                // 如果超时，输出提示信息
-                log.error("剩余文件下载任务超过1小时超时，放弃");
-            } else {
-                log.info("下载剩下的文件完成");
-            }
-        } catch (InterruptedException e) {
-            // 如果等待过程中发生中断，输出错误信息
-            log.error("下载剩下的文件被中断");
-            log.error("", e);
-        } finally {
-            if (!downloadFiles.isEmpty()) {
-                log.info("以下是下载的文件");
-                for (String fileName : downloadFiles) {
-                    log.info(fileName);
-                }
-                log.info("以上是下载的文件");
-            } else {
-                log.info("没有新的内容更新");
-            }
-            log.info("媒体库同步任务全部完成耗时：{}ms", System.currentTimeMillis() - currentTimeMillis);
-        }
+//            if (!executorService.awaitTermination(1, TimeUnit.HOURS) ) {
+//                // 如果超时，输出提示信息
+//                log.error("剩余文件下载任务超过1小时超时，放弃");
+//            } else {
+//                log.info("下载剩下的文件完成");
+//            }
+//        } catch (InterruptedException e) {
+//            // 如果等待过程中发生中断，输出错误信息
+//            log.error("下载剩下的文件被中断");
+//            log.error("", e);
+//        } finally {
+//            if (!downloadFiles.isEmpty()) {
+//                log.info("以下是下载的文件");
+//                for (String fileName : downloadFiles) {
+//                    log.info(fileName);
+//                }
+//                log.info("以上是下载的文件");
+//            } else {
+//                log.info("没有新的内容更新");
+//            }
+//            log.info("媒体库同步任务全部完成耗时：{}ms", System.currentTimeMillis() - currentTimeMillis);
+//        }
 
     }
 
@@ -248,7 +251,7 @@ public class SyncService {
                     String file = link.attr("href");
                     if (!file.equals("../")) {
                         // 使用UTF-8解码中文文件名
-                        file = java.net.URLDecoder.decode(file, "UTF-8");
+                        file = URLDecoder.decode(file, "UTF-8");
                         files.add(file);
                     }
                 }

@@ -8,7 +8,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @SpringBootApplication
 @EnableScheduling
@@ -26,8 +27,8 @@ public class XiaoyaSyncApplication {
     }
 
     @Bean
-    public ForkJoinPool forkJoinPool() {
-        return new ForkJoinPool(threadPoolNum);
+    public ExecutorService executorService() {
+        return Executors.newFixedThreadPool(threadPoolNum);
     }
 
     @Bean
