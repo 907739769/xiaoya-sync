@@ -16,8 +16,8 @@ public class XiaoyaSyncApplication {
     @Value("${runAfterStartup:1}")
     private String runAfterStartup;
 
-    @Value("${threadPoolNum:199}")
-    private String threadPoolNum;
+//    @Value("${threadPoolNum:199}")
+//    private String threadPoolNum;
 
     public static void main(String[] args) {
         SpringApplication.run(XiaoyaSyncApplication.class, args);
@@ -26,7 +26,7 @@ public class XiaoyaSyncApplication {
     @Bean
     CommandLineRunner run(SyncService syncService) {
         return args -> {
-            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", threadPoolNum);
+//            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", threadPoolNum);
             if ("1".equals(runAfterStartup)) {
                 syncService.syncFiles();
             } else {

@@ -57,7 +57,7 @@ public class SyncService {
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(4);
 
-    private final ForkJoinPool pool = new ForkJoinPool(threadPoolNum);
+    private final ForkJoinPool pool = new ForkJoinPool(399);
 
     @Scheduled(cron = "0 0 6,18 * * ?")
     public void syncFiles() {
