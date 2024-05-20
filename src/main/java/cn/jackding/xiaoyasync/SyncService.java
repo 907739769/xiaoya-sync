@@ -396,6 +396,8 @@ public class SyncService {
                 log.info("媒体库同步任务全部完成耗时：{}ms", System.currentTimeMillis() - currentTimeMillis);
                 currentTimeMillis = 0;
                 downloadFiles = null;
+                executorService=null;
+                pool=null;
             }
             return;
 
