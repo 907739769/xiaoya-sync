@@ -64,7 +64,7 @@ public class SyncService {
     private final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
     //下载文件线程池 设置小一点 防止下载太快被风控
-    private ThreadPoolExecutor executorService; // workQueue
+    private ThreadPoolExecutor executorService;
 
     //处理网站文件线程池
     private ThreadPoolExecutor pool;
@@ -248,39 +248,45 @@ public class SyncService {
 
     private void downloadFile(String currentUrl, String localDir, String file, String localFileName) {
         URL website;
-        HttpURLConnection connection;
+        HttpURLConnection connection = null;
         try {
-            website = new URL(currentUrl + file);
-            connection = (HttpURLConnection) website.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setRequestProperty("User-Agent", userAgent);
-        } catch (IOException e) {
-            log.warn("下载文件失败localDir:{} Download fail: {}", localDir, localFileName);
-            log.error("", e);
-            return;
-        }
-        for (int i = 0; ; i++) {
-
-            try (
-                    ReadableByteChannel rbc = Channels.newChannel(connection.getInputStream());
-                    FileOutputStream fos = new FileOutputStream(new File(localDir, localFileName));
-                    FileChannel fileChannel = fos.getChannel()
-            ) {
-                fileChannel.transferFrom(rbc, 0, Long.MAX_VALUE);
-                log.info("下载文件成功localDir:{} Downloaded: {}", localDir, localFileName);
-                downloadFiles.add(localDir.endsWith(File.separator) ? localDir + localFileName : localDir + File.separator + localFileName);
-                break;
+            try {
+                website = new URL(currentUrl + file);
+                connection = (HttpURLConnection) website.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setRequestProperty("User-Agent", userAgent);
             } catch (IOException e) {
-                String decodeCurrentUrl = decode(currentUrl);
-                if (i < 2) {
-                    log.warn("第{}次下载{}失败", i + 1, decodeCurrentUrl + localFileName);
-                    sleep(1);
-                } else {
-                    log.warn("第{}次下载{}还是失败，放弃", i + 1, decodeCurrentUrl + localFileName);
-                    log.warn("下载文件失败localDir:{} Download fail: {}", localDir, localFileName);
-                    log.error("", e);
+                log.warn("下载文件失败localDir:{} Download fail: {}", localDir, localFileName);
+                log.error("", e);
+                return;
+            }
+            for (int i = 0; ; i++) {
+
+                try (
+                        ReadableByteChannel rbc = Channels.newChannel(connection.getInputStream());
+                        FileOutputStream fos = new FileOutputStream(new File(localDir, localFileName));
+                        FileChannel fileChannel = fos.getChannel()
+                ) {
+                    fileChannel.transferFrom(rbc, 0, Long.MAX_VALUE);
+                    log.info("下载文件成功localDir:{} Downloaded: {}", localDir, localFileName);
+                    downloadFiles.add(localDir.endsWith(File.separator) ? localDir + localFileName : localDir + File.separator + localFileName);
                     break;
+                } catch (IOException e) {
+                    String decodeCurrentUrl = decode(currentUrl);
+                    if (i < 2) {
+                        log.warn("第{}次下载{}失败", i + 1, decodeCurrentUrl + localFileName);
+                        sleep(1);
+                    } else {
+                        log.warn("第{}次下载{}还是失败，放弃", i + 1, decodeCurrentUrl + localFileName);
+                        log.warn("下载文件失败localDir:{} Download fail: {}", localDir, localFileName);
+                        log.error("", e);
+                        break;
+                    }
                 }
+            }
+        } finally {
+            if (null != connection) {
+                connection.disconnect();
             }
         }
 
@@ -349,11 +355,15 @@ public class SyncService {
     }
 
     /**
-     * 定时任务每十分钟执行一次
+     * 定时任务每分钟执行一次
      * 销毁线程池 释放内存
      */
-    @Scheduled(fixedRate = 600000, initialDelay = 10000)
+    @Scheduled(fixedRate = 60000, initialDelay = 10000)
     public void checkThreadPoolStatus() {
+
+        if (null == executorService || null == pool) {
+            return;
+        }
 
         //同步线程池已关闭
         if (pool.isTerminated() || pool.isShutdown()) {
