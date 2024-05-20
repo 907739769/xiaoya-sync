@@ -8,6 +8,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import java.util.concurrent.ForkJoinPool;
+
 @SpringBootApplication
 @EnableScheduling
 @Slf4j
@@ -16,11 +18,16 @@ public class XiaoyaSyncApplication {
     @Value("${runAfterStartup:1}")
     private String runAfterStartup;
 
-//    @Value("${threadPoolNum:199}")
-//    private String threadPoolNum;
+    @Value("${threadPoolNum:199}")
+    private int threadPoolNum;
 
     public static void main(String[] args) {
         SpringApplication.run(XiaoyaSyncApplication.class, args);
+    }
+
+    @Bean
+    public ForkJoinPool forkJoinPool() {
+        return new ForkJoinPool(threadPoolNum);
     }
 
     @Bean

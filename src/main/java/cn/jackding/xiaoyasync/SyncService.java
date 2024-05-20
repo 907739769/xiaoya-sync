@@ -5,6 +5,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,10 @@ import java.net.URLEncoder;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
@@ -42,9 +46,6 @@ public class SyncService {
     @Value("${syncDir}")
     private String syncDir;
 
-    @Value("${threadPoolNum:199}")
-    private int threadPoolNum;
-
     @Value("#{'${excludeList}'.split(',')}")
     private List<String> excludeList;
 
@@ -57,7 +58,8 @@ public class SyncService {
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(4);
 
-    private final ForkJoinPool pool = new ForkJoinPool(399);
+    @Autowired
+    private ForkJoinPool pool;
 
     @Scheduled(cron = "0 0 6,18 * * ?")
     public void syncFiles() {
