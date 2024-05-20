@@ -21,10 +21,7 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -45,6 +42,9 @@ public class SyncService {
     @Value("${syncDir}")
     private String syncDir;
 
+    @Value("${threadPoolNum:199}")
+    private int threadPoolNum;
+
     @Value("#{'${excludeList}'.split(',')}")
     private List<String> excludeList;
 
@@ -55,7 +55,9 @@ public class SyncService {
 
     private final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-    private final ExecutorService executorService = Executors.newFixedThreadPool(10);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(4);
+
+    private final ForkJoinPool pool = new ForkJoinPool(threadPoolNum);
 
     @Scheduled(cron = "0 0 6,18 * * ?")
     public void syncFiles() {
@@ -77,13 +79,14 @@ public class SyncService {
             log.error("", e);
             return;
         } finally {
+            pool.shutdown();
             executorService.shutdown();
             log.info("媒体库同步任务耗时：{}ms", System.currentTimeMillis() - currentTimeMillis);
         }
         log.info("媒体库同步任务完成，正在下载剩下的文件");
         try {
             // 等待所有任务完成或超时（这里设置超时时间为 1 小时）
-            if (!executorService.awaitTermination(1, TimeUnit.HOURS)) {
+            if (!executorService.awaitTermination(1, TimeUnit.HOURS) && pool.awaitTermination(1, TimeUnit.HOURS)) {
                 // 如果超时，输出提示信息
                 log.error("剩余文件下载任务超过1小时超时，放弃");
             } else {
@@ -135,9 +138,7 @@ public class SyncService {
             }
         }
 
-        // 下载或者更新文件
-        remoteFiles.parallelStream().forEach(file -> {
-
+        remoteFiles.forEach(file -> pool.submit(() -> {
             //不在排除列表里面
             if (!exclude(relativePath + file)) {
                 if (file.endsWith("/")) {
@@ -153,7 +154,28 @@ public class SyncService {
             } else {
                 log.info("排除路径不处理：{}", relativePath + file);
             }
-        });
+        }));
+
+
+        // 下载或者更新文件
+//        remoteFiles.parallelStream().forEach(file -> {
+//
+//            //不在排除列表里面
+//            if (!exclude(relativePath + file)) {
+//                if (file.endsWith("/")) {
+//                    String localDirName = file.substring(0, file.length() - 1).replaceAll("[\\\\/:*?\"<>|]", "_");
+//                    // 如果是文件夹  递归调用自身方法
+//                    syncFilesRecursively(currentUrl + encode(file.substring(0, file.length() - 1)).replace("+", "%20") + "/", currentLocalDir + localDirName, relativePath + file, downloadFiles);
+//                } else {
+//                    String localFileName = file.replaceAll("[\\\\/:*?\"<>|]", "_");
+//                    if (!localFiles.contains(localFileName) || isRemoteFileUpdated(currentUrl, currentLocalDir, encode(file).replace("+", "%20"), localFileName)) {
+//                        executorService.submit(() -> downloadFile(currentUrl, currentLocalDir, encode(file).replace("+", "%20"), localFileName, downloadFiles));
+//                    }
+//                }
+//            } else {
+//                log.info("排除路径不处理：{}", relativePath + file);
+//            }
+//        });
 
 
         //处理成和本地一样的格式 好对比 不然不好对比 本地对特殊字符处理了
