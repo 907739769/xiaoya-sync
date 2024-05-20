@@ -8,9 +8,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 @SpringBootApplication
 @EnableScheduling
 @Slf4j
@@ -19,22 +16,19 @@ public class XiaoyaSyncApplication {
     @Value("${runAfterStartup:1}")
     private String runAfterStartup;
 
-    @Value("${threadPoolNum:199}")
-    private int threadPoolNum;
-
     public static void main(String[] args) {
         SpringApplication.run(XiaoyaSyncApplication.class, args);
     }
 
-    @Bean
-    public ExecutorService executorService() {
-        return Executors.newFixedThreadPool(threadPoolNum);
-    }
-
+    /**
+     * 启动服务立即执行任务
+     *
+     * @param syncService
+     * @return
+     */
     @Bean
     CommandLineRunner run(SyncService syncService) {
         return args -> {
-//            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", threadPoolNum);
             if ("1".equals(runAfterStartup)) {
                 syncService.syncFiles();
             } else {

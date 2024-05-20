@@ -5,11 +5,11 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PreDestroy;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -26,8 +26,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -52,20 +52,50 @@ public class SyncService {
     @Value("#{'${excludeList}'.split(',')}")
     private List<String> excludeList;
 
+    @Value("${threadPoolNum:199}")
+    private int threadPoolNum;
+
     //在这个列表里面的就会执行删除操作
     private List<String> syncList = Arrays.asList("每日更新/.*,电影/2023/.*,纪录片（已刮削）/.*,音乐/演唱会/.*,音乐/狄更斯：音乐剧 (2023)/.*".split(","));
 
+    //这个是全部元数据的网站列表  在这个列表里面就同步全部元数据并且删除过时数据 否则不会删除
     private final List<String> allBaseUrl = Arrays.asList("https://icyou.eu.org/,https://lanyuewan.cn/".split(","));
 
     private final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
-    private final ExecutorService executorService = Executors.newFixedThreadPool(4);
+    //下载文件线程池 设置小一点 防止下载太快被风控
+    private ThreadPoolExecutor executorService; // workQueue
 
-    @Autowired
-    private ExecutorService pool;
+    //处理网站文件线程池
+    private ThreadPoolExecutor pool;
 
+    private long currentTimeMillis;
+
+    private CopyOnWriteArrayList<String> downloadFiles;
+
+    /**
+     * 定时任务同步媒体库
+     */
     @Scheduled(cron = "0 0 6,18 * * ?")
     public void syncFiles() {
+        currentTimeMillis = System.currentTimeMillis();
+        downloadFiles = new CopyOnWriteArrayList<>();
+        if (null == pool || pool.isShutdown() || pool.isTerminated() || pool.isTerminating()) {
+            pool = new ThreadPoolExecutor(
+                    threadPoolNum, // corePoolSize
+                    threadPoolNum, // maximumPoolSize
+                    30, // keepAliveTime
+                    TimeUnit.SECONDS, // unit
+                    new LinkedBlockingQueue<>()); // workQueue
+        }
+        if (null == executorService || executorService.isShutdown() || executorService.isTerminated() || executorService.isTerminating()) {
+            executorService = new ThreadPoolExecutor(
+                    4, // corePoolSize
+                    4, // maximumPoolSize
+                    30, // keepAliveTime
+                    TimeUnit.SECONDS, // unit
+                    new LinkedBlockingQueue<>()); // workQueue
+        }
         baseUrl = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
         //本地路径加上分隔符
         String currentLocalDir = localDir.endsWith(File.separator) ? localDir : localDir + File.separator;
@@ -73,50 +103,18 @@ public class SyncService {
         if (allBaseUrl.contains(baseUrl)) {
             syncList = Arrays.asList("每日更新/.*,电影/.*,纪录片（已刮削）/.*,音乐/.*,PikPak/.*,动漫/.*,电视剧/.*,纪录片/.*,综艺/.*".split(","));
         }
-        CopyOnWriteArrayList<String> downloadFiles = new CopyOnWriteArrayList<>();
-        long currentTimeMillis = System.currentTimeMillis();
         try {
             log.info("媒体库同步任务开始");
             log.info("排除列表：{}", excludeList);
-            syncFilesRecursively(baseUrl + encode(syncDir).replace("+", "%20"), currentLocalDir + syncDir.replace("/", File.separator).replaceAll("[:*?\"<>|]", "_"), syncDir, downloadFiles);
+            syncFilesRecursively(baseUrl + encode(syncDir).replace("+", "%20"), currentLocalDir + syncDir.replace("/", File.separator).replaceAll("[:*?\"<>|]", "_"), syncDir);
         } catch (Exception e) {
             log.warn("媒体库同步任务失败");
             log.error("", e);
-            return;
-        } finally {
-//            pool.shutdown();
-//            executorService.shutdown();
-//            log.info("媒体库同步任务耗时：{}ms", System.currentTimeMillis() - currentTimeMillis);
         }
-//        log.info("媒体库同步任务完成，正在下载剩下的文件");
-//        try {
-            // 等待所有任务完成或超时（这里设置超时时间为 1 小时）
-//            if (!executorService.awaitTermination(1, TimeUnit.HOURS) ) {
-//                // 如果超时，输出提示信息
-//                log.error("剩余文件下载任务超过1小时超时，放弃");
-//            } else {
-//                log.info("下载剩下的文件完成");
-//            }
-//        } catch (InterruptedException e) {
-//            // 如果等待过程中发生中断，输出错误信息
-//            log.error("下载剩下的文件被中断");
-//            log.error("", e);
-//        } finally {
-//            if (!downloadFiles.isEmpty()) {
-//                log.info("以下是下载的文件");
-//                for (String fileName : downloadFiles) {
-//                    log.info(fileName);
-//                }
-//                log.info("以上是下载的文件");
-//            } else {
-//                log.info("没有新的内容更新");
-//            }
-//            log.info("媒体库同步任务全部完成耗时：{}ms", System.currentTimeMillis() - currentTimeMillis);
-//        }
 
     }
 
-    private void syncFilesRecursively(String currentUrl, String localDir, String relativePath, List<String> downloadFiles) {
+    private void syncFilesRecursively(String currentUrl, String localDir, String relativePath) {
         //获取网站上面的目录文件
         Set<String> remoteFiles = fetchFileList(currentUrl);
         Set<String> localFiles = new HashSet<>();
@@ -149,39 +147,17 @@ public class SyncService {
                 if (file.endsWith("/")) {
                     String localDirName = file.substring(0, file.length() - 1).replaceAll("[\\\\/:*?\"<>|]", "_");
                     // 如果是文件夹  递归调用自身方法
-                    syncFilesRecursively(currentUrl + encode(file.substring(0, file.length() - 1)).replace("+", "%20") + "/", currentLocalDir + localDirName, relativePath + file, downloadFiles);
+                    syncFilesRecursively(currentUrl + encode(file.substring(0, file.length() - 1)).replace("+", "%20") + "/", currentLocalDir + localDirName, relativePath + file);
                 } else {
                     String localFileName = file.replaceAll("[\\\\/:*?\"<>|]", "_");
                     if (!localFiles.contains(localFileName) || isRemoteFileUpdated(currentUrl, currentLocalDir, encode(file).replace("+", "%20"), localFileName)) {
-                        executorService.submit(() -> downloadFile(currentUrl, currentLocalDir, encode(file).replace("+", "%20"), localFileName, downloadFiles));
+                        executorService.submit(() -> downloadFile(currentUrl, currentLocalDir, encode(file).replace("+", "%20"), localFileName));
                     }
                 }
             } else {
                 log.info("排除路径不处理：{}", relativePath + file);
             }
         }));
-
-
-        // 下载或者更新文件
-//        remoteFiles.parallelStream().forEach(file -> {
-//
-//            //不在排除列表里面
-//            if (!exclude(relativePath + file)) {
-//                if (file.endsWith("/")) {
-//                    String localDirName = file.substring(0, file.length() - 1).replaceAll("[\\\\/:*?\"<>|]", "_");
-//                    // 如果是文件夹  递归调用自身方法
-//                    syncFilesRecursively(currentUrl + encode(file.substring(0, file.length() - 1)).replace("+", "%20") + "/", currentLocalDir + localDirName, relativePath + file, downloadFiles);
-//                } else {
-//                    String localFileName = file.replaceAll("[\\\\/:*?\"<>|]", "_");
-//                    if (!localFiles.contains(localFileName) || isRemoteFileUpdated(currentUrl, currentLocalDir, encode(file).replace("+", "%20"), localFileName)) {
-//                        executorService.submit(() -> downloadFile(currentUrl, currentLocalDir, encode(file).replace("+", "%20"), localFileName, downloadFiles));
-//                    }
-//                }
-//            } else {
-//                log.info("排除路径不处理：{}", relativePath + file);
-//            }
-//        });
-
 
         //处理成和本地一样的格式 好对比 不然不好对比 本地对特殊字符处理了
         remoteFiles = remoteFiles.stream().map(file -> {
@@ -270,7 +246,7 @@ public class SyncService {
         }
     }
 
-    private void downloadFile(String currentUrl, String localDir, String file, String localFileName, List<String> downloadFiles) {
+    private void downloadFile(String currentUrl, String localDir, String file, String localFileName) {
         URL website;
         HttpURLConnection connection;
         try {
@@ -370,6 +346,92 @@ public class SyncService {
         } catch (InterruptedException e) {
             log.error("", e);
         }
+    }
+
+    /**
+     * 定时任务每十分钟执行一次
+     * 销毁线程池 释放内存
+     */
+    @Scheduled(fixedRate = 600000, initialDelay = 10000)
+    public void checkThreadPoolStatus() {
+
+        //同步线程池已关闭
+        if (pool.isTerminated() || pool.isShutdown()) {
+            //再看看下载线程池是否关闭
+            if (executorService.isTerminated() || executorService.isShutdown()) {
+                return;
+            }
+
+            //任务为空就关闭连接池
+            if (executorService.getActiveCount() == 0 && pool.getQueue().isEmpty()) {
+                log.info("No tasks are currently executing, shutting down executorService thread pool...");
+                executorService.shutdown();
+                try {
+                    if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+                        executorService.shutdownNow();
+                    }
+                } catch (InterruptedException e) {
+                    executorService.shutdownNow();
+                    Thread.currentThread().interrupt();
+                }
+                if (!downloadFiles.isEmpty()) {
+                    log.info("以下是下载的文件");
+                    for (String fileName : downloadFiles) {
+                        log.info(fileName);
+                    }
+                    log.info("以上是下载的文件");
+                } else {
+                    log.info("没有新的内容更新");
+                }
+                log.info("媒体库同步任务全部完成耗时：{}ms", System.currentTimeMillis() - currentTimeMillis);
+                currentTimeMillis = 0;
+                downloadFiles = null;
+            }
+            return;
+
+        }
+
+        if (pool.getActiveCount() == 0 && pool.getQueue().isEmpty()) {
+            log.info("No tasks are currently executing, shutting down thread pool...");
+            pool.shutdown();
+            try {
+                if (!pool.awaitTermination(60, TimeUnit.SECONDS)) {
+                    pool.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                pool.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+            log.info("媒体库同步任务完成，已释放内存空间");
+
+        }
+
+    }
+
+    /**
+     * 服务停止的时候销毁线程池
+     */
+    @PreDestroy
+    public void onDestroy() {
+        pool.shutdown();
+        executorService.shutdown();
+        try {
+            if (!pool.awaitTermination(60, java.util.concurrent.TimeUnit.SECONDS)) {
+                pool.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            pool.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+        try {
+            if (!executorService.awaitTermination(60, java.util.concurrent.TimeUnit.SECONDS)) {
+                executorService.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executorService.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+
     }
 
 }
