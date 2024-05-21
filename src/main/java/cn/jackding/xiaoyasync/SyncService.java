@@ -76,22 +76,19 @@ public class SyncService {
 
     private OkHttpClient client;
 
+    private String run;
+
     /**
      * 定时任务同步媒体库
      */
     @Scheduled(cron = "0 0 6,18 * * ?")
     public void syncFiles() {
+        if ("1".equals(run)) {
+            log.info("任务正在执行中");
+        }
+        run = "1";
         currentTimeMillis = System.currentTimeMillis();
         downloadFiles = new CopyOnWriteArrayList<>();
-        // 创建 OkHttpClient 实例
-        if (null == connectionPool) {
-            connectionPool = new ConnectionPool(100, 10, TimeUnit.MINUTES);
-        }
-        if (null == client) {
-            client = new OkHttpClient.Builder()
-                    .connectionPool(connectionPool)
-                    .build();
-        }
         if (null == pool || pool.isShutdown() || pool.isTerminated() || pool.isTerminating()) {
             pool = new ThreadPoolExecutor(
                     threadPoolNum, // corePoolSize
@@ -107,6 +104,15 @@ public class SyncService {
                     30, // keepAliveTime
                     TimeUnit.SECONDS, // unit
                     new LinkedBlockingQueue<>()); // workQueue
+        }
+        // 创建 OkHttpClient 实例
+        if (null == connectionPool) {
+            connectionPool = new ConnectionPool(100, 10, TimeUnit.MINUTES);
+        }
+        if (null == client) {
+            client = new OkHttpClient.Builder()
+                    .connectionPool(connectionPool)
+                    .build();
         }
         baseUrl = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
         //本地路径加上分隔符
@@ -369,10 +375,10 @@ public class SyncService {
     }
 
     /**
-     * 定时任务每分钟执行一次
+     * 定时任务每5秒执行一次
      * 销毁线程池 释放内存
      */
-    @Scheduled(fixedRate = 60000, initialDelay = 10000)
+    @Scheduled(fixedRate = 5000, initialDelay = 3000)
     public void checkThreadPoolStatus() {
 
         if (null == executorService || null == pool) {
@@ -407,13 +413,14 @@ public class SyncService {
                 } else {
                     log.info("没有新的内容更新");
                 }
-                log.info("媒体库同步任务全部完成耗时：{}ms", System.currentTimeMillis() - currentTimeMillis);
+                log.info("媒体库同步任务全部完成耗时：{}ms", System.currentTimeMillis() - currentTimeMillis - 10000);
                 currentTimeMillis = 0;
                 downloadFiles = null;
                 executorService = null;
                 pool = null;
                 client = null;
                 connectionPool = null;
+                run = null;
             }
             return;
 
