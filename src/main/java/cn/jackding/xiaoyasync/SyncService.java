@@ -1,6 +1,10 @@
 package cn.jackding.xiaoyasync;
 
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.ConnectionPool;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -14,17 +18,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -73,6 +72,10 @@ public class SyncService {
 
     private CopyOnWriteArrayList<String> downloadFiles;
 
+    private ConnectionPool connectionPool;
+
+    private OkHttpClient client;
+
     /**
      * 定时任务同步媒体库
      */
@@ -80,6 +83,15 @@ public class SyncService {
     public void syncFiles() {
         currentTimeMillis = System.currentTimeMillis();
         downloadFiles = new CopyOnWriteArrayList<>();
+        // 创建 OkHttpClient 实例
+        if (null == connectionPool) {
+            connectionPool = new ConnectionPool(100, 10, TimeUnit.MINUTES);
+        }
+        if (null == client) {
+            client = new OkHttpClient.Builder()
+                    .connectionPool(connectionPool)
+                    .build();
+        }
         if (null == pool || pool.isShutdown() || pool.isTerminated() || pool.isTerminating()) {
             pool = new ThreadPoolExecutor(
                     threadPoolNum, // corePoolSize
@@ -90,8 +102,8 @@ public class SyncService {
         }
         if (null == executorService || executorService.isShutdown() || executorService.isTerminated() || executorService.isTerminating()) {
             executorService = new ThreadPoolExecutor(
-                    4, // corePoolSize
-                    4, // maximumPoolSize
+                    10, // corePoolSize
+                    10, // maximumPoolSize
                     30, // keepAliveTime
                     TimeUnit.SECONDS, // unit
                     new LinkedBlockingQueue<>()); // workQueue
@@ -216,12 +228,19 @@ public class SyncService {
         String decodeUrl = decode(url);
         log.info("开始获取网站文件目录：{}", decodeUrl);
         Set<String> files = new HashSet<>();
+        // 创建 GET 请求
+        Request getRequest = new Request.Builder()
+                .url(url)
+                .header("User-Agent", userAgent)
+                .build();
         //如果失败尝试获取三次
         for (int i = 0; ; i++) {
-            try {
-                Document doc = Jsoup.connect(url)
-                        .header("User-Agent", userAgent)
-                        .get();
+            try (Response getResponse = client.newCall(getRequest).execute();) {
+                if (!getResponse.isSuccessful()) {
+                    log.error(getResponse.body().string());
+                    throw new RuntimeException();
+                }
+                Document doc = Jsoup.parse(getResponse.body().string());
                 Elements links = doc.select("a[href]");
                 for (Element link : links) {
                     String file = link.attr("href");
@@ -233,7 +252,7 @@ public class SyncService {
                 }
                 log.info("获取网站文件目录成功：{}", decodeUrl);
                 return files;
-            } catch (IOException e) {
+            } catch (Exception e) {
                 if (i < 2) {
                     log.warn("第{}次获取{}失败", i + 1, decodeUrl);
                     sleep(1);
@@ -247,46 +266,36 @@ public class SyncService {
     }
 
     private void downloadFile(String currentUrl, String localDir, String file, String localFileName) {
-        URL website;
-        HttpURLConnection connection = null;
-        try {
-            try {
-                website = new URL(currentUrl + file);
-                connection = (HttpURLConnection) website.openConnection();
-                connection.setRequestMethod("GET");
-                connection.setRequestProperty("User-Agent", userAgent);
-            } catch (IOException e) {
-                log.warn("下载文件失败localDir:{} Download fail: {}", localDir, localFileName);
-                log.error("", e);
-                return;
-            }
-            for (int i = 0; ; i++) {
 
-                try (
-                        ReadableByteChannel rbc = Channels.newChannel(connection.getInputStream());
-                        FileOutputStream fos = new FileOutputStream(new File(localDir, localFileName));
-                        FileChannel fileChannel = fos.getChannel()
-                ) {
-                    fileChannel.transferFrom(rbc, 0, Long.MAX_VALUE);
-                    log.info("下载文件成功localDir:{} Downloaded: {}", localDir, localFileName);
-                    downloadFiles.add(localDir.endsWith(File.separator) ? localDir + localFileName : localDir + File.separator + localFileName);
-                    break;
-                } catch (IOException e) {
-                    String decodeCurrentUrl = decode(currentUrl);
-                    if (i < 2) {
-                        log.warn("第{}次下载{}失败", i + 1, decodeCurrentUrl + localFileName);
-                        sleep(1);
-                    } else {
-                        log.warn("第{}次下载{}还是失败，放弃", i + 1, decodeCurrentUrl + localFileName);
-                        log.warn("下载文件失败localDir:{} Download fail: {}", localDir, localFileName);
-                        log.error("", e);
-                        break;
-                    }
+        // 创建 GET 请求
+        Request getRequest = new Request.Builder()
+                .url(currentUrl + file)
+                .header("User-Agent", userAgent)
+                .build();
+        // 发送 GET 请求并处理响应
+        for (int i = 0; ; i++) {
+            try (Response getResponse = client.newCall(getRequest).execute(); ReadableByteChannel rbc = Channels.newChannel(getResponse.body().byteStream());
+                 FileOutputStream fos = new FileOutputStream(new File(localDir, localFileName));
+                 FileChannel fileChannel = fos.getChannel()) {
+                if (!getResponse.isSuccessful()) {
+                    throw new RuntimeException();
                 }
-            }
-        } finally {
-            if (null != connection) {
-                connection.disconnect();
+                fileChannel.transferFrom(rbc, 0, Long.MAX_VALUE);
+                log.info("下载文件成功localDir:{} Downloaded: {}", localDir, localFileName);
+                downloadFiles.add(localDir.endsWith(File.separator) ? localDir + localFileName : localDir + File.separator + localFileName);
+                break;
+            } catch (Exception e) {
+                String decodeCurrentUrl = decode(currentUrl);
+                if (i < 2) {
+                    log.warn("第{}次下载{}失败", i + 1, decodeCurrentUrl + localFileName);
+                    sleep(1);
+                } else {
+                    log.warn("第{}次下载{}还是失败，放弃", i + 1, decodeCurrentUrl + localFileName);
+                    log.warn("下载文件失败localDir:{} Download fail: {}", localDir, localFileName);
+                    log.error("", e);
+                    break;
+                }
+
             }
         }
 
@@ -311,16 +320,21 @@ public class SyncService {
     }
 
     private boolean isRemoteFileUpdated(String baseUrl, String localDir, String file, String localFileName) {
-        try {
-            URL url = new URL(baseUrl + file);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("HEAD");
-            connection.setRequestProperty("User-Agent", userAgent);
-            long remoteLastModified = connection.getLastModified();
+        // 创建 GET 请求
+        Request headRequest = new Request.Builder()
+                .url(baseUrl + file)
+                .head()
+                .header("User-Agent", userAgent)
+                .build();
+        try (Response response = client.newCall(headRequest).execute()) {
+            String lastModified = response.header("Last-Modified");
+            long remoteLastModified = new Date(lastModified).getTime();
 
             File localFile = new File(localDir, localFileName);
             long localLastModified = localFile.lastModified();
-
+            if (remoteLastModified > localLastModified) {
+                log.info("更新文件localDir:{} localFileName: {}", localDir, localFileName);
+            }
             return remoteLastModified > localLastModified;
         } catch (IOException e) {
             log.error("", e);
@@ -396,8 +410,10 @@ public class SyncService {
                 log.info("媒体库同步任务全部完成耗时：{}ms", System.currentTimeMillis() - currentTimeMillis);
                 currentTimeMillis = 0;
                 downloadFiles = null;
-                executorService=null;
-                pool=null;
+                executorService = null;
+                pool = null;
+                client = null;
+                connectionPool = null;
             }
             return;
 
@@ -425,23 +441,31 @@ public class SyncService {
      */
     @PreDestroy
     public void onDestroy() {
-        pool.shutdown();
-        executorService.shutdown();
-        try {
-            if (!pool.awaitTermination(60, java.util.concurrent.TimeUnit.SECONDS)) {
-                pool.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            pool.shutdownNow();
-            Thread.currentThread().interrupt();
+        if (null != pool) {
+            pool.shutdown();
         }
-        try {
-            if (!executorService.awaitTermination(60, java.util.concurrent.TimeUnit.SECONDS)) {
-                executorService.shutdownNow();
+        if (null != executorService) {
+            executorService.shutdown();
+        }
+        if (null != pool) {
+            try {
+                if (!pool.awaitTermination(60, java.util.concurrent.TimeUnit.SECONDS)) {
+                    pool.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                pool.shutdownNow();
+                Thread.currentThread().interrupt();
             }
-        } catch (InterruptedException e) {
-            executorService.shutdownNow();
-            Thread.currentThread().interrupt();
+        }
+        if (null != executorService) {
+            try {
+                if (!executorService.awaitTermination(60, java.util.concurrent.TimeUnit.SECONDS)) {
+                    executorService.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executorService.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
         }
 
     }
