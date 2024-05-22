@@ -121,7 +121,7 @@ public class SyncService {
         String currentLocalDir = localDir.endsWith(File.separator) ? localDir : localDir + File.separator;
         //如果是这两个网站 同步的文件会多一些
         if (allBaseUrl.contains(baseUrl)) {
-            syncList = Arrays.asList("每日更新/.*,电影/.*,纪录片（已刮削）/.*,音乐/.*,PikPak/.*,动漫/.*,电视剧/.*,纪录片/.*,综艺/.*".split(","));
+            syncList = Arrays.asList("每日更新/.*,电影/.*,纪录片（已刮削）/.*,音乐/.*,PikPak/.*,动漫/.*,电视剧/.*,纪录片/.*,综艺/.*,\uD83D\uDCFA画质演示测试（4K，8K，HDR，Dolby）/".split(","));
         }
         try {
             log.info("媒体库同步任务开始");
