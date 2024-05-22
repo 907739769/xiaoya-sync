@@ -7,7 +7,7 @@ VOLUME /data
 ENV TZ=Asia/Shanghai
 ENV runAfterStartup="1"
 ENV excludeList=""
-ENV threadPoolNum="199"
+ENV threadPoolNum="99"
 ENV syncUrl="https://emby.xiaoya.pro/"
 ENV syncDir=""
 ENTRYPOINT ["sh","-c","java -jar -Xms128m -Xmx4095m /application.jar"]

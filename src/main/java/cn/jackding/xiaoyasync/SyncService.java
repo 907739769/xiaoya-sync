@@ -51,7 +51,7 @@ public class SyncService {
     @Value("#{'${excludeList}'.split(',')}")
     private List<String> excludeList;
 
-    @Value("${threadPoolNum:199}")
+    @Value("${threadPoolNum:99}")
     private int threadPoolNum;
 
     //在这个列表里面的就会执行删除操作
@@ -60,7 +60,7 @@ public class SyncService {
     //这个是全部元数据的网站列表  在这个列表里面就同步全部元数据并且删除过时数据 否则不会删除
     private final List<String> allBaseUrl = Arrays.asList("https://icyou.eu.org/,https://lanyuewan.cn/".split(","));
 
-    private final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    private final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0";
 
     //下载文件线程池 设置小一点 防止下载太快被风控
     private ThreadPoolExecutor executorService;
@@ -107,10 +107,12 @@ public class SyncService {
         }
         // 创建 OkHttpClient 实例
         if (null == connectionPool) {
-            connectionPool = new ConnectionPool(100, 10, TimeUnit.MINUTES);
+            connectionPool = new ConnectionPool(60, 10, TimeUnit.MINUTES);
         }
         if (null == client) {
             client = new OkHttpClient.Builder()
+                    .readTimeout(60,TimeUnit.SECONDS)
+                    .connectTimeout(30,TimeUnit.SECONDS)
                     .connectionPool(connectionPool)
                     .build();
         }
@@ -378,7 +380,7 @@ public class SyncService {
      * 定时任务每5秒执行一次
      * 销毁线程池 释放内存
      */
-    @Scheduled(fixedRate = 5000, initialDelay = 3000)
+    @Scheduled(fixedRate = 5000, initialDelay = 10000)
     public void checkThreadPoolStatus() {
 
         if (null == executorService || null == pool) {

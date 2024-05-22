@@ -40,8 +40,11 @@ PikPak/
 - [x] 3.增加指定同步网站配置
 - [x] 4.增加线程数配置
 - [x] 5.增加指定目录同步
-- [x] 6.使用okhttp大幅优化同步性能，降低网站服务器压力
+- [x] 6.使用okhttp大幅优化同步性能（http2支持单TCP连接），降低网站服务器压力
 - [ ] 0.增量更新
+
+# 更新记录
+20240522 降低默认线程数、降低TCP连接池、修改UA
 
 ## docker部署 
 
@@ -78,7 +81,7 @@ docker run -d \
 -e TZ=Asia/Shanghai \
 -e runAfterStartup=1 \
 -e excludeList="" \
--e threadPoolNum="199" \
+-e threadPoolNum="99" \
 -e syncUrl="https://emby.xiaoya.pro/" \
 -e syncDir="" \
 -v /volume1/docker-data/xiaoya/xiaoya:/data \
@@ -98,7 +101,7 @@ services:
       TZ: Asia/Shanghai
       runAfterStartup: 1
       excludeList: ""
-      threadPoolNum: 199
+      threadPoolNum: 99
       syncUrl: "https://emby.xiaoya.pro/"
       syncDir: ""
     volumes:
