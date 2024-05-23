@@ -85,6 +85,7 @@ docker run -d \
 -e syncUrl="https://emby.xiaoya.pro/" \
 -e syncDir="" \
 -v /volume1/docker-data/xiaoya/xiaoya:/data \
+-v /volume1/docker/xiaoya-sync/log:/log \
 jacksaoding/xiaoya-sync:latest
 ```
 
@@ -106,4 +107,5 @@ services:
       syncDir: ""
     volumes:
       - /volume1/docker-data/xiaoya/xiaoya:/data
+      - /volume1/docker/xiaoya-sync/log:/log
 ```

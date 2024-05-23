@@ -4,6 +4,7 @@ LABEL description="同步小雅emby媒体库"
 LABEL authors="JackDing"
 COPY ./target/application.jar /application.jar
 VOLUME /data
+VOLUME /log
 ENV TZ=Asia/Shanghai
 ENV runAfterStartup="1"
 ENV excludeList=""

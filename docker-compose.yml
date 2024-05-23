@@ -8,3 +8,4 @@ services:
       TZ: Asia/Shanghai
     volumes:
       - /volume1/docker-data/xiaoya/xiaoya:/data
+      - /volume1/docker/xiaoya-sync/log:/log
