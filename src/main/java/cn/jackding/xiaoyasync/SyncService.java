@@ -1,6 +1,6 @@
 package cn.jackding.xiaoyasync;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  * @Version 1.0.0
  */
 @Service
-@Slf4j
+@Log4j2
 public class SyncService {
 
     @Value("${syncUrl}")

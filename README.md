@@ -1,6 +1,6 @@
 # xiaoya-sync
 
-注意，这个docker容器运行任务期间会占用1GB的内存（没有执行同步任务占用100M内存）（增加线程数更大，每200线程占用1G内存）
+注意，这个docker容器运行任务期间会占用500MB的内存（增加线程数更大，每200线程占用1G内存）
 
 同步小雅emby媒体库，每天早上晚上六点同步，服务启动也会执行一次。扫描一次大概10分钟。
 
@@ -45,6 +45,7 @@ PikPak/
 
 # 更新记录
 20240522 降低默认线程数、降低TCP连接数支持单TCP连接、修改UA
+20240523 增加日志路径挂载、日志框架改为log4j2异步日志框架，调整启动服务默认不执行任务
 
 ## docker部署 
 
@@ -79,7 +80,7 @@ docker run -d \
 --name=xiaoya-sync \
 --network="host" \
 -e TZ=Asia/Shanghai \
--e runAfterStartup=1 \
+-e runAfterStartup=0 \
 -e excludeList="" \
 -e threadPoolNum="99" \
 -e syncUrl="https://emby.xiaoya.pro/" \
@@ -100,7 +101,7 @@ services:
     network_mode: "host"
     environment:
       TZ: Asia/Shanghai
-      runAfterStartup: 1
+      runAfterStartup: 0
       excludeList: ""
       threadPoolNum: 99
       syncUrl: "https://emby.xiaoya.pro/"

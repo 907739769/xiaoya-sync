@@ -1,6 +1,6 @@
 package cn.jackding.xiaoyasync;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -10,13 +10,14 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-@Slf4j
+@Log4j2
 public class XiaoyaSyncApplication {
 
     @Value("${runAfterStartup:1}")
     private String runAfterStartup;
 
     public static void main(String[] args) {
+        System.setProperty("Log4jContextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector");
         SpringApplication.run(XiaoyaSyncApplication.class, args);
     }
 

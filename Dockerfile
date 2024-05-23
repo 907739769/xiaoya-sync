@@ -6,7 +6,7 @@ COPY ./target/application.jar /application.jar
 VOLUME /data
 VOLUME /log
 ENV TZ=Asia/Shanghai
-ENV runAfterStartup="1"
+ENV runAfterStartup="0"
 ENV excludeList=""
 ENV threadPoolNum="99"
 ENV syncUrl="https://emby.xiaoya.pro/"
