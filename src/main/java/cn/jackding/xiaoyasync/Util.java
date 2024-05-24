@@ -17,7 +17,7 @@ public class Util {
 
     public static String encode(String str) {
         try {
-            return URLEncoder.encode(str, "UTF-8");
+            return URLEncoder.encode(str, "UTF-8").replace("+", "%20").replace("%2F", "/");
         } catch (UnsupportedEncodingException e) {
             log.error("", e);
         }

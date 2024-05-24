@@ -5,10 +5,6 @@ import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -16,16 +12,19 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PreDestroy;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -53,7 +52,7 @@ public class SyncService {
     private List<String> syncList = Arrays.asList("每日更新/.*,电影/2023/.*,纪录片（已刮削）/.*,音乐/演唱会/.*,音乐/狄更斯：音乐剧 (2023)/.*".split(","));
 
     //这个是全部元数据的网站列表  在这个列表里面就同步全部元数据并且删除过时数据 否则不会删除
-    private final List<String> allBaseUrl = Arrays.asList("https://icyou.eu.org/,https://lanyuewan.cn/".split(","));
+    private final List<String> allBaseUrl = Arrays.asList("https://icyou.eu.org/,https://lanyuewan.cn/,https://emby.8.net.co/,https://emby.raydoom.tk/,https://emby.kaiserver.uk/,https://embyxiaoya.laogl.top/".split(","));
 
     private final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0";
 
@@ -81,7 +80,7 @@ public class SyncService {
         try {
             log.info("媒体库同步任务开始");
             log.info("排除列表：{}", excludeList);
-            syncFilesRecursively(baseUrl + Util.encode(syncDir).replace("+", "%20"), localDir + syncDir.replace("/", File.separator).replaceAll("[:*?\"<>|]", "_"), syncDir);
+            syncFilesRecursively(baseUrl + Util.encode(syncDir), localDir + syncDir.replace("/", File.separator).replaceAll("[:*?\"<>|]", "_"), syncDir);
         } catch (Exception e) {
             log.warn("媒体库同步任务失败");
             log.error("", e);
@@ -91,7 +90,7 @@ public class SyncService {
 
     public void syncFilesRecursively(String currentUrl, String localDir, String relativePath) {
         //获取网站上面的目录文件
-        Set<String> remoteFiles = fetchFileList(currentUrl);
+        Map<String, String> remoteFiles = fetchFileList(currentUrl);
         Set<String> localFiles = new HashSet<>();
         //本地路径加上分隔符
         String currentLocalDir = localDir.endsWith(File.separator) ? localDir : localDir + File.separator;
@@ -116,17 +115,17 @@ public class SyncService {
             }
         }
 
-        remoteFiles.forEach(file -> pool.submit(() -> {
+        remoteFiles.forEach((file, date) -> pool.submit(() -> {
             //不在排除列表里面
             if (!exclude(relativePath + file)) {
                 if (file.endsWith("/")) {
                     String localDirName = file.substring(0, file.length() - 1).replaceAll("[\\\\/:*?\"<>|]", "_");
                     // 如果是文件夹  递归调用自身方法
-                    syncFilesRecursively(currentUrl + Util.encode(file.substring(0, file.length() - 1)).replace("+", "%20") + "/", currentLocalDir + localDirName, relativePath + file);
+                    syncFilesRecursively(currentUrl + Util.encode(file), currentLocalDir + localDirName, relativePath + file);
                 } else {
                     String localFileName = file.replaceAll("[\\\\/:*?\"<>|]", "_");
-                    if (!localFiles.contains(localFileName) || isRemoteFileUpdated(currentUrl, currentLocalDir, Util.encode(file).replace("+", "%20"), localFileName)) {
-                        executorService.submit(() -> downloadFile(currentUrl, currentLocalDir, Util.encode(file).replace("+", "%20"), localFileName));
+                    if (!localFiles.contains(localFileName) || isRemoteFileUpdated(date, currentLocalDir, localFileName)) {
+                        executorService.submit(() -> downloadFile(currentUrl, currentLocalDir, Util.encode(file), localFileName));
                     }
                 }
             } else {
@@ -135,7 +134,7 @@ public class SyncService {
         }));
 
         //处理成和本地一样的格式 好对比 不然不好对比 本地对特殊字符处理了
-        remoteFiles = remoteFiles.stream().map(file -> {
+        Set<String> remoteFileLinks = remoteFiles.keySet().stream().map(file -> {
             if (file.endsWith("/")) {
                 return file.substring(0, file.length() - 1).replaceAll("[\\\\/:*?\"<>|]", "_") + "/";
             } else {
@@ -151,7 +150,7 @@ public class SyncService {
                 fileName = file.contains(".") ? file.substring(0, file.lastIndexOf('.')) : file;
             }
             //远程没有本地这个文件名称  而且在处理列表里面  不在排除列表里面
-            if (!remoteFiles.contains(fileName) && shouldDelete(relativePath + file) && !exclude(relativePath + file)) {
+            if (!remoteFileLinks.contains(fileName) && shouldDelete(relativePath + file) && !exclude(relativePath + file)) {
                 File localFile = new File(currentLocalDir, file);
                 if (localFile.isDirectory()) {
                     deleteDirectory(localFile);
@@ -230,7 +229,7 @@ public class SyncService {
         }
     }
 
-    private Set<String> fetchFileList(String url) {
+    private Map<String, String> fetchFileList(String url) {
         String decodeUrl = Util.decode(url);
         log.info("开始获取网站文件目录：{}", decodeUrl);
         Set<String> files = new HashSet<>();
@@ -241,23 +240,27 @@ public class SyncService {
                 .build();
         //如果失败尝试获取三次
         for (int i = 0; ; i++) {
-            try (Response getResponse = client.newCall(getRequest).execute();) {
+            try (Response getResponse = client.newCall(getRequest).execute()) {
                 if (!getResponse.isSuccessful()) {
                     log.error(getResponse.body().string());
                     throw new RuntimeException();
                 }
-                Document doc = Jsoup.parse(getResponse.body().string());
-                Elements links = doc.select("a[href]");
-                for (Element link : links) {
-                    String file = link.attr("href");
-                    if (!file.equals("../")) {
-                        // 使用UTF-8解码中文文件名
-                        file = URLDecoder.decode(file, "UTF-8");
-                        files.add(file);
-                    }
+                String regex = "<a href=\"(.*?)\">(.*?)</a>\\s+(\\d{2}-[A-Za-z]{3}-\\d{4} \\d{2}:\\d{2})";
+                // 创建 Pattern 对象
+                Pattern pattern = Pattern.compile(regex);
+                // 创建 Matcher 对象
+                Matcher matcher = pattern.matcher(getResponse.body().string());
+                // 创建 Map 用于存放链接和对应的日期
+                Map<String, String> linkDateMap = new HashMap<>();
+                // 查找匹配的链接和日期
+                while (matcher.find()) {
+                    String link = matcher.group(1);
+                    link = URLDecoder.decode(link, "UTF-8");
+                    String date = matcher.group(3);
+                    linkDateMap.put(link, date);
                 }
                 log.info("获取网站文件目录成功：{}", decodeUrl);
-                return files;
+                return linkDateMap;
             } catch (Exception e) {
                 if (i < 2) {
                     log.warn("第{}次获取{}失败", i + 1, decodeUrl);
@@ -325,27 +328,28 @@ public class SyncService {
         return false;
     }
 
-    private boolean isRemoteFileUpdated(String baseUrl, String localDir, String file, String localFileName) {
-        // 创建 GET 请求
-        Request headRequest = new Request.Builder()
-                .url(baseUrl + file)
-                .head()
-                .header("User-Agent", userAgent)
-                .build();
-        try (Response response = client.newCall(headRequest).execute()) {
-            String lastModified = response.header("Last-Modified");
-            long remoteLastModified = new Date(lastModified).getTime();
-
-            File localFile = new File(localDir, localFileName);
-            long localLastModified = localFile.lastModified();
-            if (remoteLastModified > localLastModified) {
-                log.info("更新文件localDir:{} localFileName: {}", localDir, localFileName);
-            }
-            return remoteLastModified > localLastModified;
-        } catch (IOException e) {
+    private boolean isRemoteFileUpdated(String remoteFileDate, String localDir, String localFileName) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy hh:mm", Locale.ENGLISH);
+        Date date;
+        try {
+            date = dateFormat.parse(remoteFileDate);
+        } catch (ParseException e) {
             log.error("", e);
             return false;
         }
+
+        long remoteLastModified = date.getTime();
+        if (allBaseUrl.contains(baseUrl)) {
+            remoteLastModified = remoteLastModified + 28800000;
+        }
+
+        File localFile = new File(localDir, localFileName);
+        long localLastModified = localFile.lastModified();
+        if (remoteLastModified > localLastModified) {
+            log.info("更新文件localDir:{} localFileName: {}", localDir, localFileName);
+        }
+        return remoteLastModified > localLastModified;
+
     }
 
     private void sleep(long l) {
