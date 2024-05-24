@@ -2,13 +2,14 @@
 <!--日志级别以及优先级排序: OFF > FATAL > ERROR > WARN > INFO > DEBUG > TRACE > ALL -->
 <!--status="WARN": status用来指定log4j本身的打印日志的级别.默认是OFF -->
 <!--monitorInterval="30": 间隔秒数,自动检测配置文件的变更和重新配置本身(如果跟踪线上异常信息可以把配置文件修改后不需重启服务，日志就会按照新的配置输出) -->
-<configuration status="INFO" monitorInterval="30">
+<configuration status="INFO">
 
     <properties>
         <!--自定义一些常量，之后使用${变量名}引用-->
         <!-- 配置日志文件输出目录 -->
         <Property name="log_dir">log</Property>
-        <Property name="log_pattern">[%d{yyyy-MM-dd HH:mm:ss:SSS}][%-5level][%.5thread][%logger{0}.%method:%line] %msg%n</Property>
+<!--        <Property name="log_pattern">[%d{yyyy-MM-dd HH:mm:ss:SSS}][%-5level][%.5thread][%logger{0}.%method:%line] %msg%n</Property>-->
+        <Property name="log_pattern">[%d{yyyy-MM-dd HH:mm:ss:SSS}] %msg%n</Property>
     </properties>
 
     <!--Appenders: 定义输出内容,输出格式,输出方式,日志保存策略等,常用其下三种标签[console,File,RollingFile]-->
@@ -61,7 +62,7 @@
             <AppenderRef ref="ROLLING_FILE" />
         </AsyncRoot>
 
-        <AsyncLogger name="cn.jackding" level="info" additivity="false">
+        <AsyncLogger name="cn.jackding" level="debug" additivity="false">
             <AppenderRef ref="CONSOLE"/>
             <AppenderRef ref="ROLLING_FILE" />
         </AsyncLogger>

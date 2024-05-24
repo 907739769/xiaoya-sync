@@ -17,9 +17,7 @@ import javax.annotation.PreDestroy;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
@@ -44,9 +42,6 @@ public class SyncService {
 
     @Value("${mediaLibDir}")
     private String localDir;
-
-    @Value("${syncDir}")
-    private String syncDir;
 
     @Value("#{'${excludeList}'.split(',')}")
     private List<String> excludeList;
@@ -79,54 +74,14 @@ public class SyncService {
     private String run;
 
     /**
-     * 定时任务同步媒体库
+     * 同步媒体库
      */
-    @Scheduled(cron = "0 0 6,18 * * ?")
-    public void syncFiles() {
-        if ("1".equals(run)) {
-            log.info("任务正在执行中");
-        }
-        run = "1";
-        currentTimeMillis = System.currentTimeMillis();
-        downloadFiles = new CopyOnWriteArrayList<>();
-        if (null == pool || pool.isShutdown() || pool.isTerminated() || pool.isTerminating()) {
-            pool = new ThreadPoolExecutor(
-                    threadPoolNum, // corePoolSize
-                    threadPoolNum, // maximumPoolSize
-                    30, // keepAliveTime
-                    TimeUnit.SECONDS, // unit
-                    new LinkedBlockingQueue<>()); // workQueue
-        }
-        if (null == executorService || executorService.isShutdown() || executorService.isTerminated() || executorService.isTerminating()) {
-            executorService = new ThreadPoolExecutor(
-                    10, // corePoolSize
-                    10, // maximumPoolSize
-                    30, // keepAliveTime
-                    TimeUnit.SECONDS, // unit
-                    new LinkedBlockingQueue<>()); // workQueue
-        }
-        // 创建 OkHttpClient 实例
-        if (null == connectionPool) {
-            connectionPool = new ConnectionPool(60, 10, TimeUnit.MINUTES);
-        }
-        if (null == client) {
-            client = new OkHttpClient.Builder()
-                    .readTimeout(60,TimeUnit.SECONDS)
-                    .connectTimeout(30,TimeUnit.SECONDS)
-                    .connectionPool(connectionPool)
-                    .build();
-        }
-        baseUrl = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
-        //本地路径加上分隔符
-        String currentLocalDir = localDir.endsWith(File.separator) ? localDir : localDir + File.separator;
-        //如果是这两个网站 同步的文件会多一些
-        if (allBaseUrl.contains(baseUrl)) {
-            syncList = Arrays.asList("每日更新/.*,电影/.*,纪录片（已刮削）/.*,音乐/.*,PikPak/.*,动漫/.*,电视剧/.*,纪录片/.*,综艺/.*,\uD83D\uDCFA画质演示测试（4K，8K，HDR，Dolby）/".split(","));
-        }
+    public void syncFiles(String syncDir) {
+        init();
         try {
             log.info("媒体库同步任务开始");
             log.info("排除列表：{}", excludeList);
-            syncFilesRecursively(baseUrl + encode(syncDir).replace("+", "%20"), currentLocalDir + syncDir.replace("/", File.separator).replaceAll("[:*?\"<>|]", "_"), syncDir);
+            syncFilesRecursively(baseUrl + Util.encode(syncDir).replace("+", "%20"), localDir + syncDir.replace("/", File.separator).replaceAll("[:*?\"<>|]", "_"), syncDir);
         } catch (Exception e) {
             log.warn("媒体库同步任务失败");
             log.error("", e);
@@ -134,7 +89,7 @@ public class SyncService {
 
     }
 
-    private void syncFilesRecursively(String currentUrl, String localDir, String relativePath) {
+    public void syncFilesRecursively(String currentUrl, String localDir, String relativePath) {
         //获取网站上面的目录文件
         Set<String> remoteFiles = fetchFileList(currentUrl);
         Set<String> localFiles = new HashSet<>();
@@ -167,11 +122,11 @@ public class SyncService {
                 if (file.endsWith("/")) {
                     String localDirName = file.substring(0, file.length() - 1).replaceAll("[\\\\/:*?\"<>|]", "_");
                     // 如果是文件夹  递归调用自身方法
-                    syncFilesRecursively(currentUrl + encode(file.substring(0, file.length() - 1)).replace("+", "%20") + "/", currentLocalDir + localDirName, relativePath + file);
+                    syncFilesRecursively(currentUrl + Util.encode(file.substring(0, file.length() - 1)).replace("+", "%20") + "/", currentLocalDir + localDirName, relativePath + file);
                 } else {
                     String localFileName = file.replaceAll("[\\\\/:*?\"<>|]", "_");
-                    if (!localFiles.contains(localFileName) || isRemoteFileUpdated(currentUrl, currentLocalDir, encode(file).replace("+", "%20"), localFileName)) {
-                        executorService.submit(() -> downloadFile(currentUrl, currentLocalDir, encode(file).replace("+", "%20"), localFileName));
+                    if (!localFiles.contains(localFileName) || isRemoteFileUpdated(currentUrl, currentLocalDir, Util.encode(file).replace("+", "%20"), localFileName)) {
+                        executorService.submit(() -> downloadFile(currentUrl, currentLocalDir, Util.encode(file).replace("+", "%20"), localFileName));
                     }
                 }
             } else {
@@ -216,6 +171,49 @@ public class SyncService {
         }
     }
 
+    public void init() {
+        if ("1".equals(run)) {
+            log.info("任务正在执行中");
+        }
+        run = "1";
+        currentTimeMillis = System.currentTimeMillis();
+        downloadFiles = new CopyOnWriteArrayList<>();
+        if (null == pool || pool.isShutdown() || pool.isTerminated() || pool.isTerminating()) {
+            pool = new ThreadPoolExecutor(
+                    threadPoolNum, // corePoolSize
+                    threadPoolNum, // maximumPoolSize
+                    30, // keepAliveTime
+                    TimeUnit.SECONDS, // unit
+                    new LinkedBlockingQueue<>()); // workQueue
+        }
+        if (null == executorService || executorService.isShutdown() || executorService.isTerminated() || executorService.isTerminating()) {
+            executorService = new ThreadPoolExecutor(
+                    10, // corePoolSize
+                    10, // maximumPoolSize
+                    30, // keepAliveTime
+                    TimeUnit.SECONDS, // unit
+                    new LinkedBlockingQueue<>()); // workQueue
+        }
+        // 创建 OkHttpClient 实例
+        if (null == connectionPool) {
+            connectionPool = new ConnectionPool(60, 10, TimeUnit.MINUTES);
+        }
+        if (null == client) {
+            client = new OkHttpClient.Builder()
+                    .readTimeout(60, TimeUnit.SECONDS)
+                    .connectTimeout(30, TimeUnit.SECONDS)
+                    .connectionPool(connectionPool)
+                    .build();
+        }
+        baseUrl = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
+        //本地路径加上分隔符
+        localDir = localDir.endsWith(File.separator) ? localDir : localDir + File.separator;
+        //如果是这两个网站 同步的文件会多一些
+        if (allBaseUrl.contains(baseUrl)) {
+            syncList = Arrays.asList("每日更新/.*,电影/.*,纪录片（已刮削）/.*,音乐/.*,PikPak/.*,动漫/.*,电视剧/.*,纪录片/.*,综艺/.*,\uD83D\uDCFA画质演示测试（4K，8K，HDR，Dolby）/".split(","));
+        }
+    }
+
     private void deleteDirectory(File directory) {
         if (directory.exists()) {
             File[] files = directory.listFiles();
@@ -233,7 +231,7 @@ public class SyncService {
     }
 
     private Set<String> fetchFileList(String url) {
-        String decodeUrl = decode(url);
+        String decodeUrl = Util.decode(url);
         log.info("开始获取网站文件目录：{}", decodeUrl);
         Set<String> files = new HashSet<>();
         // 创建 GET 请求
@@ -293,7 +291,7 @@ public class SyncService {
                 downloadFiles.add(localDir.endsWith(File.separator) ? localDir + localFileName : localDir + File.separator + localFileName);
                 break;
             } catch (Exception e) {
-                String decodeCurrentUrl = decode(currentUrl);
+                String decodeCurrentUrl = Util.decode(currentUrl);
                 if (i < 2) {
                     log.warn("第{}次下载{}失败", i + 1, decodeCurrentUrl + localFileName);
                     sleep(1);
@@ -348,24 +346,6 @@ public class SyncService {
             log.error("", e);
             return false;
         }
-    }
-
-    private String encode(String str) {
-        try {
-            return URLEncoder.encode(str, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            log.error("", e);
-        }
-        return str;
-    }
-
-    private String decode(String str) {
-        try {
-            return URLDecoder.decode(str, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            log.error("", e);
-        }
-        return str;
     }
 
     private void sleep(long l) {
