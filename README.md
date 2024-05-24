@@ -18,7 +18,7 @@
 音乐/狄更斯：音乐剧 (2023)/
 ```
 
-`https://icyou.eu.org/` `https://lanyuewan.cn/`
+`https://icyou.eu.org/` `https://lanyuewan.cn/` `https://emby.8.net.co/` `https://emby.raydoom.tk/` `https://emby.kaiserver.uk/` `https://embyxiaoya.laogl.top/`
 
 以上两个网站会同步以下指定目录
 
@@ -32,6 +32,7 @@ PikPak/
 电视剧/
 纪录片/
 综艺/
+📺画质演示测试（4K，8K，HDR，Dolby）/
 ```
 
 # 开发计划
@@ -48,7 +49,7 @@ PikPak/
 ```
 20240522 降低默认线程数、降低TCP连接数支持单TCP连接、修改UA
 20240523 增加日志路径挂载、日志框架改为log4j2异步日志框架，调整启动服务默认不执行任务
-20240524 修改日志打印、每日任务只同步每日更新、新增任务每7天同步一次全量数据、修改更新文件逻辑，文件时间戳改成网页上面的，而不去head请求网站，减少服务器压力
+20240524 修改日志打印、每日任务只同步每日更新、新增任务每7天同步一次全量数据、修改更新文件逻辑，文件时间戳改成网页上面的，而不去head请求网站，减少服务器压力,未设置同步网站的情况下随机从网站池中获取同步网站
 ```
 
 ## docker部署 
@@ -87,7 +88,7 @@ docker run -d \
 -e runAfterStartup=0 \
 -e excludeList="" \
 -e threadPoolNum="99" \
--e syncUrl="https://emby.xiaoya.pro/" \
+-e syncUrl="" \
 -e syncDir="" \
 -v /volume1/docker-data/xiaoya/xiaoya:/data \
 -v /volume1/docker/xiaoya-sync/log:/log \
@@ -108,7 +109,7 @@ services:
       runAfterStartup: 0
       excludeList: ""
       threadPoolNum: 99
-      syncUrl: "https://emby.xiaoya.pro/"
+      syncUrl: ""
       syncDir: ""
     volumes:
       - /volume1/docker-data/xiaoya/xiaoya:/data

@@ -204,6 +204,11 @@ public class SyncService {
                     .connectionPool(connectionPool)
                     .build();
         }
+        if (null == baseUrl || baseUrl.length() == 0) {
+            Random random = new Random();
+            int randomNumber = random.nextInt(allBaseUrl.size());
+            baseUrl = allBaseUrl.get(randomNumber);
+        }
         baseUrl = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
         //本地路径加上分隔符
         localDir = localDir.endsWith(File.separator) ? localDir : localDir + File.separator;

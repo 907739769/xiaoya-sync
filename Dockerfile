@@ -9,6 +9,6 @@ ENV TZ=Asia/Shanghai
 ENV runAfterStartup="0"
 ENV excludeList=""
 ENV threadPoolNum="99"
-ENV syncUrl="https://emby.xiaoya.pro/"
+ENV syncUrl=""
 ENV syncDir=""
 ENTRYPOINT ["sh","-c","java -jar -Xms128m -Xmx4095m /application.jar"]
