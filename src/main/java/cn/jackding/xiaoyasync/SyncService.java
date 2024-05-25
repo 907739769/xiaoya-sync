@@ -54,7 +54,7 @@ public class SyncService {
     //这个是全部元数据的网站列表  在这个列表里面就同步全部元数据并且删除过时数据 否则不会删除
     private final List<String> allBaseUrl = Arrays.asList("https://icyou.eu.org/,https://lanyuewan.cn/,https://emby.8.net.co/,https://emby.raydoom.tk/,https://emby.kaiserver.uk/,https://embyxiaoya.laogl.top/".split(","));
 
-    private final String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0";
+    private String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0";
 
     //下载文件线程池 设置小一点 防止下载太快被风控
     private ThreadPoolExecutor executorService;
@@ -205,8 +205,14 @@ public class SyncService {
                     .connectionPool(connectionPool)
                     .build();
         }
+        Random random = new Random();
+        int firstNum = random.nextInt(20) + 55;
+        int thirdNum = random.nextInt(3800);
+        int fourthNum = random.nextInt(140);
+        List<String> osTypes = Arrays.asList("(Windows NT 6.1; WOW64),(Windows NT 10.0; WOW64),(X11; Linux x86_64),(Macintosh; Intel Mac OS X 10_14_5)".split(","));
+        String chromeVersion = String.format("Chrome/%d.0.%d.%d", firstNum, thirdNum, fourthNum);
+        userAgent = "Mozilla/5.0 " + osTypes.get(random.nextInt(osTypes.size())) + " AppleWebKit/537.36 (KHTML, like Gecko) " + chromeVersion + " Safari/537.36";
         if (null == baseUrl || baseUrl.length() == 0) {
-            Random random = new Random();
             int randomNumber = random.nextInt(allBaseUrl.size());
             baseUrl = allBaseUrl.get(randomNumber);
         }
