@@ -47,10 +47,10 @@
                 <!-- modulate若为true，则日志时间将以0点为边界进行偏移计算; 每间隔interval(与filepattern滚动日期单位一致)发生一次rollover，得到一个log.tar.gz文件-->
                 <TimeBasedTriggeringPolicy modulate="true" interval="1"/>
                 <!-- 日志文件达到多少的时候进行滚动 -->
-                <SizeBasedTriggeringPolicy size="100 MB"/>
+                <SizeBasedTriggeringPolicy size="50 MB"/>
             </Policies>
             <!-- 最多同一文件夹下7个日志压缩文件，默认7个-->
-            <DefaultRolloverStrategy min="1" max="7"/>
+            <DefaultRolloverStrategy min="1" max="10"/>
         </RollingFile>
 
     </Appenders>

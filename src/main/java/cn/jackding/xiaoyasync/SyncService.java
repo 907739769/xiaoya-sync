@@ -173,6 +173,7 @@ public class SyncService {
     public void init() {
         if ("1".equals(run)) {
             log.info("任务正在执行中");
+            throw new RuntimeException("任务正在执行中");
         }
         run = "1";
         currentTimeMillis = System.currentTimeMillis();
