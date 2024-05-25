@@ -11,4 +11,4 @@ ENV excludeList=""
 ENV threadPoolNum="99"
 ENV syncUrl=""
 ENV syncDir=""
-ENTRYPOINT ["sh","-c","java -jar -Xms128m -Xmx512m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=512m -XX:+OptimizeStringConcat -XX:+PrintGCDetails -Xloggc:/log/gc.log  -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/log /application.jar"]
+ENTRYPOINT ["sh","-c","java -jar -Xms256m -Xmx512m -XX:+OptimizeStringConcat -XX:+PrintGCDetails -Xloggc:/log/gc.log  -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/log /application.jar"]
