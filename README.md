@@ -58,11 +58,11 @@ PikPak/
 ```
 部署前参数需要修改
 /volume1/docker-data/xiaoya/xiaoya修改成媒体库路径
-runAfterStartup  启动是否立即执行默认1启用，不启用填0
-excludeList 排除列表 默认为空 不进行同步及删除的目录例如每日更新/动漫/.*,每日更新/动漫剧场版/.*
-threadPoolNum 设置线程数默认199，设置越大占用内存CPU越高，同步速度相应会快一些 每增多200线程多占用1G内存
-syncUrl 同步网站 默认https://emby.xiaoya.pro/  可选https://icyou.eu.org/或者https://lanyuewan.cn/
+runAfterStartup  启动是否立即执行同步任务 默认不启用0，启用填1
+excludeList 排除列表 默认为空 设置不进行同步及删除的目录例如每日更新/动漫/.*,每日更新/动漫剧场版/.*
+syncUrl 同步网站 默认从网站池中随机选一个  可选https://icyou.eu.org/或者https://lanyuewan.cn/
 syncDir 同步路径 指定同步路径 默认空 同步全站，可填入 每日更新/电影/ 或者 每日更新/  等具体的网站路径
+threadPoolNum 设置线程数默认99 不建议修改
 ```
 
 一键命令部署
