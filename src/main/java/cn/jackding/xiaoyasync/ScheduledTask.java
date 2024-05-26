@@ -22,13 +22,14 @@ public class ScheduledTask {
      */
     @Scheduled(cron = "0 0 6,18 * * ?")
     public void syncUpdatedDaily() {
+        Util.randomSleep();
         syncService.syncFiles("每日更新/");
     }
 
     /**
      * 全量同步
      */
-    @Scheduled(fixedDelay = 1000 * 60 * 60 * 24 * 7, initialDelay = 1000 * 60 * 60 * 24 * 7)
+    @Scheduled(fixedDelay = 1000 * 60 * 60 * 24 * 3, initialDelay = 1000 * 60 * 60 * 24 * 3)
     public void syncAll() {
         syncService.syncFiles("");
     }

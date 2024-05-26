@@ -205,14 +205,9 @@ public class SyncService {
                     .connectionPool(connectionPool)
                     .build();
         }
-        Random random = new Random();
-        int firstNum = random.nextInt(20) + 55;
-        int thirdNum = random.nextInt(3800);
-        int fourthNum = random.nextInt(140);
-        List<String> osTypes = Arrays.asList("(Windows NT 6.1; WOW64),(Windows NT 10.0; WOW64),(X11; Linux x86_64),(Macintosh; Intel Mac OS X 10_14_5)".split(","));
-        String chromeVersion = String.format("Chrome/%d.0.%d.%d", firstNum, thirdNum, fourthNum);
-        userAgent = "Mozilla/5.0 " + osTypes.get(random.nextInt(osTypes.size())) + " AppleWebKit/537.36 (KHTML, like Gecko) " + chromeVersion + " Safari/537.36";
+        userAgent = Util.userAgent();
         if (null == baseUrl || baseUrl.length() == 0) {
+            Random random = new Random();
             int randomNumber = random.nextInt(allBaseUrl.size());
             baseUrl = allBaseUrl.get(randomNumber);
         }
@@ -276,12 +271,13 @@ public class SyncService {
             } catch (Exception e) {
                 if (i < 2) {
                     log.warn("第{}次获取{}失败", i + 1, decodeUrl);
-                    sleep(1);
+                    Util.sleep(1);
                 } else {
                     log.warn("第{}次获取{}还是失败，放弃", i + 1, decodeUrl);
                     log.error("", e);
                     throw new RuntimeException(e);
                 }
+                userAgent = Util.userAgent();
             }
         }
     }
@@ -309,14 +305,14 @@ public class SyncService {
                 String decodeCurrentUrl = Util.decode(currentUrl);
                 if (i < 2) {
                     log.warn("第{}次下载{}失败", i + 1, decodeCurrentUrl + localFileName);
-                    sleep(1);
+                    Util.sleep(1);
                 } else {
                     log.warn("第{}次下载{}还是失败，放弃", i + 1, decodeCurrentUrl + localFileName);
                     log.warn("下载文件失败localDir:{} Download fail: {}", localDir, localFileName);
                     log.error("", e);
                     break;
                 }
-
+                userAgent = Util.userAgent();
             }
         }
 
@@ -362,14 +358,6 @@ public class SyncService {
         }
         return remoteLastModified > localLastModified;
 
-    }
-
-    private void sleep(long l) {
-        try {
-            TimeUnit.SECONDS.sleep(l);
-        } catch (InterruptedException e) {
-            log.error("", e);
-        }
     }
 
     /**
