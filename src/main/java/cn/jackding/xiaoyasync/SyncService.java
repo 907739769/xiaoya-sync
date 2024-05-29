@@ -391,15 +391,21 @@ public class SyncService {
                     Thread.currentThread().interrupt();
                 }
                 if (!downloadFiles.isEmpty()) {
+                    Collections.sort(downloadFiles);
                     log.info("以下是下载的文件");
                     for (String fileName : downloadFiles) {
                         log.info(fileName);
                     }
                     log.info("以上是下载的文件");
+                    log.info("共下载{}个文件", downloadFiles.size());
                 } else {
                     log.info("没有新的内容更新");
                 }
-                log.info("媒体库同步任务全部完成耗时：{}ms", System.currentTimeMillis() - currentTimeMillis - 10000);
+                long milliseconds = (System.currentTimeMillis() - currentTimeMillis) < 10000 ? (System.currentTimeMillis() - currentTimeMillis) : (System.currentTimeMillis() - currentTimeMillis - 10000);
+                long hours = TimeUnit.MILLISECONDS.toHours(milliseconds);
+                long minutes = TimeUnit.MILLISECONDS.toMinutes(milliseconds) - TimeUnit.HOURS.toMinutes(hours);
+                long seconds = TimeUnit.MILLISECONDS.toSeconds(milliseconds) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds));
+                log.info("媒体库同步任务全部完成耗时：{}小时{}分钟{}秒", hours, minutes, seconds);
                 currentTimeMillis = 0;
                 downloadFiles = null;
                 executorService = null;
