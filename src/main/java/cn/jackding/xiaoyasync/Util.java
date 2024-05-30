@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 @Log4j2
 public class Util {
 
-    private static final Random random = new Random();
+    public static final Random random = new Random();
 
     public static String encode(String str) {
         try {

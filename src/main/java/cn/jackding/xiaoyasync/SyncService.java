@@ -5,6 +5,7 @@ import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.jsoup.internal.StringUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,8 @@ public class SyncService {
 
     @Value("${syncUrl}")
     private String baseUrl;
+
+    private String useBaseUrl;
 
     @Value("${mediaLibDir}")
     private String localDir;
@@ -80,7 +83,7 @@ public class SyncService {
         try {
             log.info("媒体库同步任务开始");
             log.info("排除列表：{}", excludeList);
-            syncFilesRecursively(baseUrl + Util.encode(syncDir), localDir + syncDir.replace("/", File.separator).replaceAll("[:*?\"<>|]", "_"), syncDir);
+            syncFilesRecursively(useBaseUrl + Util.encode(syncDir), localDir + syncDir.replace("/", File.separator).replaceAll("[:*?\"<>|]", "_"), syncDir);
         } catch (Exception e) {
             log.warn("媒体库同步任务失败");
             log.error("", e);
@@ -206,16 +209,17 @@ public class SyncService {
                     .build();
         }
         userAgent = Util.userAgent();
-        if (null == baseUrl || baseUrl.length() == 0) {
-            Random random = new Random();
-            int randomNumber = random.nextInt(allBaseUrl.size());
-            baseUrl = allBaseUrl.get(randomNumber);
+        if (StringUtil.isBlank(baseUrl)) {
+            int randomNumber = Util.random.nextInt(allBaseUrl.size());
+            useBaseUrl = allBaseUrl.get(randomNumber);
+        } else {
+            useBaseUrl = baseUrl;
         }
-        baseUrl = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
+        useBaseUrl = useBaseUrl.endsWith("/") ? useBaseUrl : useBaseUrl + "/";
         //本地路径加上分隔符
         localDir = localDir.endsWith(File.separator) ? localDir : localDir + File.separator;
         //如果是这两个网站 同步的文件会多一些
-        if (allBaseUrl.contains(baseUrl)) {
+        if (allBaseUrl.contains(useBaseUrl)) {
             syncList = Arrays.asList("每日更新/.*,电影/.*,纪录片（已刮削）/.*,音乐/.*,PikPak/.*,动漫/.*,电视剧/.*,纪录片/.*,综艺/.*,\uD83D\uDCFA画质演示测试（4K，8K，HDR，Dolby）/".split(","));
         }
     }
@@ -347,7 +351,7 @@ public class SyncService {
         }
 
         long remoteLastModified = date.getTime();
-        if (allBaseUrl.contains(baseUrl)) {
+        if (allBaseUrl.contains(useBaseUrl)) {
             remoteLastModified = remoteLastModified + 28800000;
         }
 
