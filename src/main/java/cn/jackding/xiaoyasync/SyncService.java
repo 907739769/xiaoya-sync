@@ -341,6 +341,12 @@ public class SyncService {
     }
 
     private boolean isRemoteFileUpdated(String remoteFileDate, String localDir, String localFileName) {
+        File localFile = new File(localDir, localFileName);
+        if (localFile.length() < 10) {
+            return true;
+        }
+        long localLastModified = localFile.lastModified();
+
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy hh:mm", Locale.ENGLISH);
         Date date;
         try {
@@ -354,9 +360,6 @@ public class SyncService {
         if (allBaseUrl.contains(useBaseUrl)) {
             remoteLastModified = remoteLastModified + 28800000;
         }
-
-        File localFile = new File(localDir, localFileName);
-        long localLastModified = localFile.lastModified();
         if (remoteLastModified > localLastModified) {
             log.info("更新文件localDir:{} localFileName: {}", localDir, localFileName);
         }
