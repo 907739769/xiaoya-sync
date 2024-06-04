@@ -1,7 +1,7 @@
 package cn.jackding.xiaoyasync;
 
+import cn.jackding.xiaoyasync.util.Util;
 import lombok.extern.log4j.Log4j2;
-import org.jsoup.internal.StringUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -16,9 +16,6 @@ public class XiaoyaSyncApplication {
 
     @Value("${runAfterStartup:1}")
     private String runAfterStartup;
-
-    @Value("${syncDir}")
-    private String syncDir;
 
     public static void main(String[] args) {
         SpringApplication.run(XiaoyaSyncApplication.class, args);
@@ -35,10 +32,7 @@ public class XiaoyaSyncApplication {
         return args -> {
             Util.initBot();
             if ("1".equals(runAfterStartup)) {
-                if(StringUtil.isBlank(syncDir)){
-                    syncDir="每日更新/";
-                }
-                syncService.syncFiles(syncDir);
+                syncService.syncFilesDaily();
             } else {
                 log.info("启动立即执行任务未启用，等待定时任务处理");
             }

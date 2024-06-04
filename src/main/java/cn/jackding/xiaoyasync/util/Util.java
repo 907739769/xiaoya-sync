@@ -1,4 +1,4 @@
-package cn.jackding.xiaoyasync;
+package cn.jackding.xiaoyasync.util;
 
 import cn.jackding.xiaoyasync.config.Config;
 import cn.jackding.xiaoyasync.tgbot.SyncBot;

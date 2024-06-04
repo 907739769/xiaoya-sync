@@ -72,6 +72,17 @@
             <groupId>org.telegram</groupId>
             <artifactId>telegrambots-abilities</artifactId>
             <version>6.1.0</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>eclipse-collections</artifactId>
+                    <groupId>org.eclipse.collections</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.collections</groupId>
+            <artifactId>eclipse-collections</artifactId>
+            <version>11.0.0.M1</version>
         </dependency>
     </dependencies>
 

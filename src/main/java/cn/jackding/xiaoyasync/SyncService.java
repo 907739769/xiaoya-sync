@@ -1,5 +1,6 @@
 package cn.jackding.xiaoyasync;
 
+import cn.jackding.xiaoyasync.util.Util;
 import lombok.extern.log4j.Log4j2;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
@@ -51,6 +52,9 @@ public class SyncService {
     @Value("${threadPoolNum:99}")
     private int threadPoolNum;
 
+    @Value("${syncDir}")
+    private String syncDir;
+
     //在这个列表里面的就会执行删除操作
     private List<String> syncList = Arrays.asList("每日更新/.*,电影/2023/.*,纪录片（已刮削）/.*,音乐/演唱会/.*,音乐/狄更斯：音乐剧 (2023)/.*".split(","));
 
@@ -91,6 +95,16 @@ public class SyncService {
             log.error("", e);
         }
 
+    }
+
+    /**
+     * 同步媒体库每日任务
+     */
+    public void syncFilesDaily() {
+        if (StringUtil.isBlank(syncDir)) {
+            syncDir = "每日更新/";
+        }
+        syncFiles(syncDir);
     }
 
     public void syncFilesRecursively(String currentUrl, String localDir, String relativePath) {
@@ -178,6 +192,7 @@ public class SyncService {
     public void init() {
         if ("1".equals(run)) {
             log.info("任务正在执行中");
+            Util.sendTgMsg("任务正在执行中");
             throw new RuntimeException("任务正在执行中");
         }
         run = "1";
@@ -373,7 +388,7 @@ public class SyncService {
      * 定时任务每5秒执行一次
      * 销毁线程池 释放内存
      */
-    @Scheduled(fixedRate = 5000, initialDelay = 10000)
+    @Scheduled(fixedRate = 20000, initialDelay = 20000)
     public void checkThreadPoolStatus() {
 
         if (null == executorService || null == pool) {
@@ -412,7 +427,7 @@ public class SyncService {
                     log.info("没有新的内容更新");
                     Util.sendTgMsg("没有新的内容更新");
                 }
-                long milliseconds = (System.currentTimeMillis() - currentTimeMillis) < 10000 ? (System.currentTimeMillis() - currentTimeMillis) : (System.currentTimeMillis() - currentTimeMillis - 10000);
+                long milliseconds = (System.currentTimeMillis() - currentTimeMillis) < 40000 ? (System.currentTimeMillis() - currentTimeMillis) : (System.currentTimeMillis() - currentTimeMillis - 40000);
                 long hours = TimeUnit.MILLISECONDS.toHours(milliseconds);
                 long minutes = TimeUnit.MILLISECONDS.toMinutes(milliseconds) - TimeUnit.HOURS.toMinutes(hours);
                 long seconds = TimeUnit.MILLISECONDS.toSeconds(milliseconds) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds));
