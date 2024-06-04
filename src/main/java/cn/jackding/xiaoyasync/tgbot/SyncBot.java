@@ -11,7 +11,7 @@ import org.telegram.telegrambots.meta.generics.TelegramClient;
  * @Version 1.0.0
  */
 public class SyncBot implements LongPollingSingleThreadUpdateConsumer {
-    private TelegramClient telegramClient = new OkHttpTelegramClient("5437240154:AAGCS_Mwpx9QeoNReRAC_BHH2pKXOr3fzOU");
+    private TelegramClient telegramClient = new OkHttpTelegramClient("");
 
     @Override
     public void consume(Update update) {
