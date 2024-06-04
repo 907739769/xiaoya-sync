@@ -82,10 +82,12 @@ public class SyncService {
         init();
         try {
             log.info("媒体库同步任务开始");
+            Util.sendTgMsg("媒体库同步任务开始");
             log.info("排除列表：{}", excludeList);
             syncFilesRecursively(useBaseUrl + Util.encode(syncDir), localDir + syncDir.replace("/", File.separator).replaceAll("[:*?\"<>|]", "_"), syncDir);
         } catch (Exception e) {
             log.warn("媒体库同步任务失败");
+            Util.sendTgMsg("媒体库同步任务失败");
             log.error("", e);
         }
 
@@ -405,14 +407,17 @@ public class SyncService {
                     }
                     log.info("以上是下载的文件");
                     log.info("共下载{}个文件", downloadFiles.size());
+                    Util.sendTgMsg("共下载" + downloadFiles.size() + "个文件");
                 } else {
                     log.info("没有新的内容更新");
+                    Util.sendTgMsg("没有新的内容更新");
                 }
                 long milliseconds = (System.currentTimeMillis() - currentTimeMillis) < 10000 ? (System.currentTimeMillis() - currentTimeMillis) : (System.currentTimeMillis() - currentTimeMillis - 10000);
                 long hours = TimeUnit.MILLISECONDS.toHours(milliseconds);
                 long minutes = TimeUnit.MILLISECONDS.toMinutes(milliseconds) - TimeUnit.HOURS.toMinutes(hours);
                 long seconds = TimeUnit.MILLISECONDS.toSeconds(milliseconds) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds));
                 log.info("媒体库同步任务全部完成耗时：{}小时{}分钟{}秒", hours, minutes, seconds);
+                Util.sendTgMsg("媒体库同步任务全部完成耗时：" + hours + "小时" + minutes + "分钟" + seconds + "秒");
                 currentTimeMillis = 0;
                 downloadFiles = null;
                 executorService = null;

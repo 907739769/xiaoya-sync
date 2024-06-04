@@ -1,6 +1,14 @@
 package cn.jackding.xiaoyasync;
 
+import cn.jackding.xiaoyasync.config.Config;
+import cn.jackding.xiaoyasync.tgbot.SyncBot;
+import cn.jackding.xiaoyasync.tgbot.TgSendMsg;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
+import org.telegram.telegrambots.bots.DefaultBotOptions;
+import org.telegram.telegrambots.meta.TelegramBotsApi;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -64,6 +72,33 @@ public class Util {
         try {
             TimeUnit.SECONDS.sleep(random.nextInt(60));
         } catch (InterruptedException e) {
+            log.error("", e);
+        }
+    }
+
+    public static void sendTgMsg(String msg) {
+        new TgSendMsg().sendMsg(msg);
+    }
+
+    public static void initBot() {
+        if (StringUtils.isBlank(Config.tgUserId) || StringUtils.isBlank(Config.tgToken)) {
+            return;
+        }
+        TelegramBotsApi telegramBotsApi;
+        try {
+            telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
+        } catch (TelegramApiException e) {
+            log.error("", e);
+            return;
+        }
+        DefaultBotOptions botOptions = new DefaultBotOptions();
+//        botOptions.setProxyHost(Config.telegramBotProxyHost);
+//        botOptions.setProxyPort(Config.telegramBotProxyPort);
+//        botOptions.setProxyType(DefaultBotOptions.ProxyType.HTTP);
+        //使用AbilityBot创建的事件响应机器人
+        try {
+            telegramBotsApi.registerBot(new SyncBot(botOptions));
+        } catch (TelegramApiException e) {
             log.error("", e);
         }
     }

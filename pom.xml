@@ -64,20 +64,14 @@
 
         <dependency>
             <groupId>org.telegram</groupId>
-            <artifactId>telegrambots-longpolling</artifactId>
-            <version>7.2.1</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.telegram</groupId>
-            <artifactId>telegrambots-client</artifactId>
-            <version>7.2.1</version>
+            <artifactId>telegrambots</artifactId>
+            <version>6.1.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.telegram</groupId>
             <artifactId>telegrambots-abilities</artifactId>
-            <version>7.2.1</version>
+            <version>6.1.0</version>
         </dependency>
     </dependencies>
 

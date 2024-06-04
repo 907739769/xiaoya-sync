@@ -33,6 +33,7 @@ public class XiaoyaSyncApplication {
     @Bean
     CommandLineRunner run(SyncService syncService) {
         return args -> {
+            Util.initBot();
             if ("1".equals(runAfterStartup)) {
                 if(StringUtil.isBlank(syncDir)){
                     syncDir="每日更新/";
