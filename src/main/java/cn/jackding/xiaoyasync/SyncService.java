@@ -6,6 +6,7 @@ import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.internal.StringUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -83,16 +84,31 @@ public class SyncService {
      * 同步媒体库
      */
     public void syncFiles(String syncDir) {
-        init();
-        try {
-            log.info("媒体库同步任务开始");
-            Util.sendTgMsg("媒体库同步任务开始");
-            log.info("排除列表：{}", excludeList);
-            syncFilesRecursively(useBaseUrl + Util.encode(syncDir), localDir + syncDir.replace("/", File.separator).replaceAll("[:*?\"<>|]", "_"), syncDir);
-        } catch (Exception e) {
-            log.warn("媒体库同步任务失败");
-            Util.sendTgMsg("媒体库同步任务失败");
-            log.error("", e);
+        if ("1".equals(run)) {
+            log.info("任务正在执行中");
+            Util.sendTgMsg("任务正在执行中");
+            throw new RuntimeException("任务正在执行中");
+        }
+        run = "1";
+        //增加三次重试
+        for (int i = 0; ; i++) {
+            init();
+            try {
+                log.info("媒体库同步任务开始");
+                Util.sendTgMsg("媒体库同步任务开始");
+                log.info("排除列表：{}", excludeList);
+                syncFilesRecursively(useBaseUrl + Util.encode(syncDir), localDir + syncDir.replace("/", File.separator).replaceAll("[:*?\"<>|]", "_"), syncDir);
+                break;
+            } catch (Exception e) {
+                if (i < 2) {
+                    Util.sleep(1);
+                } else {
+                    log.warn("媒体库同步任务失败");
+                    Util.sendTgMsg("媒体库同步任务失败");
+                    log.error("", e);
+                    throw new RuntimeException(e);
+                }
+            }
         }
 
     }
@@ -190,12 +206,6 @@ public class SyncService {
     }
 
     public void init() {
-        if ("1".equals(run)) {
-            log.info("任务正在执行中");
-            Util.sendTgMsg("任务正在执行中");
-            throw new RuntimeException("任务正在执行中");
-        }
-        run = "1";
         currentTimeMillis = System.currentTimeMillis();
         downloadFiles = new CopyOnWriteArrayList<>();
         if (null == pool || pool.isShutdown() || pool.isTerminated() || pool.isTerminating()) {
@@ -233,6 +243,9 @@ public class SyncService {
             useBaseUrl = baseUrl;
         }
         useBaseUrl = useBaseUrl.endsWith("/") ? useBaseUrl : useBaseUrl + "/";
+        if (StringUtils.isNotBlank(syncDir)) {
+            syncDir = syncDir.endsWith("/") ? syncDir : syncDir + "/";
+        }
         //本地路径加上分隔符
         localDir = localDir.endsWith(File.separator) ? localDir : localDir + File.separator;
         //如果是这两个网站 同步的文件会多一些
