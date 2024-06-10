@@ -13,5 +13,5 @@ ENV syncUrl=""
 ENV syncDir=""
 ENV tgToken=""
 ENV tgUserId=""
-ENV JAVA_OPTS="-Xms512m -Xmx512m"
+ENV JAVA_OPTS=""
 ENTRYPOINT ["sh","-c","java -jar $JAVA_OPTS -XX:+OptimizeStringConcat -XX:+PrintGCDetails -Xloggc:/log/gc.log  -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/log /application.jar"]
