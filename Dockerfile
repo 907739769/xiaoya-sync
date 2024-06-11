@@ -1,4 +1,4 @@
-FROM eclipse-temurin:8u412-b08-jdk-ubi9-minimal
+FROM eclipse-temurin:8u342-b07-jdk-jammy
 LABEL title="xiaoya-sync"
 LABEL description="同步小雅emby媒体库"
 LABEL authors="JackDing"
