@@ -80,6 +80,9 @@ public class SyncService {
 
     private volatile String run;
 
+    // // 创建 Pattern 对象
+    private static final Pattern pattern = Pattern.compile("<a href=\"(.*?)\">(.*?)</a>\\s+(\\d{2}-[A-Za-z]{3}-\\d{4} \\d{2}:\\d{2})");
+
     /**
      * 同步媒体库
      */
@@ -286,9 +289,6 @@ public class SyncService {
                     log.error(getResponse.body().string());
                     throw new RuntimeException();
                 }
-                String regex = "<a href=\"(.*?)\">(.*?)</a>\\s+(\\d{2}-[A-Za-z]{3}-\\d{4} \\d{2}:\\d{2})";
-                // 创建 Pattern 对象
-                Pattern pattern = Pattern.compile(regex);
                 // 创建 Matcher 对象
                 Matcher matcher = pattern.matcher(getResponse.body().string());
                 // 创建 Map 用于存放链接和对应的日期
