@@ -13,5 +13,5 @@ ENV syncUrl=""
 ENV syncDir=""
 ENV tgToken=""
 ENV tgUserId=""
-ENV JAVA_OPTS=""
+ENV JAVA_OPTS="-Xms512m -Xmx512m"
 ENTRYPOINT ["sh","-c","java -jar $JAVA_OPTS -XX:+OptimizeStringConcat -XX:+PrintGCDetails -Xloggc:/log/gc.log  -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/log /xiaoyasync.jar"]
