@@ -2,7 +2,7 @@ FROM eclipse-temurin:8u342-b07-jre-jammy
 LABEL title="xiaoya-sync"
 LABEL description="同步小雅emby媒体库"
 LABEL authors="JackDing"
-COPY ./target/application.jar /application.jar
+COPY ./target/application.jar /xiaoyasync.jar
 VOLUME /data
 VOLUME /log
 ENV TZ=Asia/Shanghai
@@ -14,4 +14,4 @@ ENV syncDir=""
 ENV tgToken=""
 ENV tgUserId=""
 ENV JAVA_OPTS=""
-ENTRYPOINT ["sh","-c","java -jar $JAVA_OPTS -XX:+OptimizeStringConcat -XX:+PrintGCDetails -Xloggc:/log/gc.log  -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/log /application.jar"]
+ENTRYPOINT ["sh","-c","java -jar $JAVA_OPTS -XX:+OptimizeStringConcat -XX:+PrintGCDetails -Xloggc:/log/gc.log  -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/log /xiaoyasync.jar"]
