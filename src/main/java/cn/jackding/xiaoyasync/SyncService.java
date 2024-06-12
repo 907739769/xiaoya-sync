@@ -453,6 +453,7 @@ public class SyncService {
                 client = null;
                 connectionPool = null;
                 run = null;
+                System.gc();
             }
             return;
 
