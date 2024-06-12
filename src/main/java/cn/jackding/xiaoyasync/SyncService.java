@@ -325,16 +325,19 @@ public class SyncService {
                 .build();
         // 发送 GET 请求并处理响应
         for (int i = 0; ; i++) {
-            try (Response getResponse = client.newCall(getRequest).execute(); ReadableByteChannel rbc = Channels.newChannel(getResponse.body().byteStream());
-                 FileOutputStream fos = new FileOutputStream(new File(localDir, localFileName));
-                 FileChannel fileChannel = fos.getChannel()) {
-                if (!getResponse.isSuccessful()) {
-                    throw new RuntimeException();
+            try (Response getResponse = client.newCall(getRequest).execute()) {
+                assert getResponse.body() != null;
+                try (ReadableByteChannel rbc = Channels.newChannel(getResponse.body().byteStream());
+                     FileOutputStream fos = new FileOutputStream(new File(localDir, localFileName));
+                     FileChannel fileChannel = fos.getChannel()) {
+                    if (!getResponse.isSuccessful()) {
+                        throw new RuntimeException();
+                    }
+                    fileChannel.transferFrom(rbc, 0, Long.MAX_VALUE);
+                    log.info("下载文件成功localDir:{} Downloaded: {}", localDir, localFileName);
+                    downloadFiles.add(localDir.endsWith(File.separator) ? localDir + localFileName : localDir + File.separator + localFileName);
+                    break;
                 }
-                fileChannel.transferFrom(rbc, 0, Long.MAX_VALUE);
-                log.info("下载文件成功localDir:{} Downloaded: {}", localDir, localFileName);
-                downloadFiles.add(localDir.endsWith(File.separator) ? localDir + localFileName : localDir + File.separator + localFileName);
-                break;
             } catch (Exception e) {
                 String decodeCurrentUrl = Util.decode(currentUrl);
                 if (i < 2) {
