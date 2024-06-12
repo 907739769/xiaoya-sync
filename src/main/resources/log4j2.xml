@@ -62,7 +62,7 @@
 
     <Loggers>
 
-        <AsyncRoot level="INFO" includeLocation="true">
+        <AsyncRoot level="ERROR" includeLocation="false">
             <AppenderRef ref="CONSOLE"/>
             <AppenderRef ref="ROLLING_FILE" />
         </AsyncRoot>
