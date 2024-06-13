@@ -88,7 +88,7 @@ public class SyncService {
      */
     public void syncFiles(String syncDir) {
         if ("1".equals(run)) {
-            log.info("任务正在执行中");
+            log.debug("任务正在执行中");
             Util.sendTgMsg("任务正在执行中");
             throw new RuntimeException("任务正在执行中");
         }
@@ -137,9 +137,9 @@ public class SyncService {
         //本地路径不存在就创建
         if (!localDirectory.exists()) {
             if (localDirectory.mkdirs()) {
-                log.info("创建文件夹成功：{}", localDir);
+                log.debug("创建文件夹成功：{}", localDir);
             } else {
-                log.warn("创建文件夹失败：{}", localDir);
+                log.error("创建文件夹失败：{}", localDir);
                 return;
             }
         }
@@ -193,13 +193,13 @@ public class SyncService {
                 if (localFile.isDirectory()) {
                     deleteDirectory(localFile);
                     if (!localFile.exists()) {
-                        log.info("删除过时文件夹成功currentLocalDir:{} Delete fail: {}", currentLocalDir, file);
+                        log.debug("删除过时文件夹成功currentLocalDir:{} Delete fail: {}", currentLocalDir, file);
                     } else {
                         log.warn("删除过时文件夹失败currentLocalDir:{} Deleted: {}", currentLocalDir, file);
                     }
                 } else {
                     if (localFile.delete()) {
-                        log.info("删除过时文件成功currentLocalDir:{} Deleted: {}", currentLocalDir, file);
+                        log.debug("删除过时文件成功currentLocalDir:{} Deleted: {}", currentLocalDir, file);
                     } else {
                         log.warn("删除过时文件失败currentLocalDir:{} Delete fail: {}", currentLocalDir, file);
                     }
@@ -275,7 +275,7 @@ public class SyncService {
 
     private Map<String, String> fetchFileList(String url) {
         String decodeUrl = Util.decode(url);
-        log.info("开始获取网站文件目录：{}", decodeUrl);
+        log.debug("开始获取网站文件目录：{}", decodeUrl);
         Set<String> files = new HashSet<>();
         // 创建 GET 请求
         Request getRequest = new Request.Builder()
@@ -302,11 +302,11 @@ public class SyncService {
                     String date = matcher.group(3);
                     linkDateMap.put(link, date);
                 }
-                log.info("获取网站文件目录成功：{}", decodeUrl);
+                log.debug("获取网站文件目录成功：{}", decodeUrl);
                 return linkDateMap;
             } catch (Exception e) {
                 if (i < 2) {
-                    log.warn("第{}次获取{}失败", i + 1, decodeUrl);
+                    log.debug("第{}次获取{}失败", i + 1, decodeUrl);
                     Util.sleep(1);
                 } else {
                     log.warn("第{}次获取{}还是失败，放弃", i + 1, decodeUrl);
@@ -336,14 +336,14 @@ public class SyncService {
                         throw new RuntimeException();
                     }
                     fileChannel.transferFrom(rbc, 0, Long.MAX_VALUE);
-                    log.info("下载文件成功localDir:{} Downloaded: {}", localDir, localFileName);
+                    log.debug("下载文件成功localDir:{} Downloaded: {}", localDir, localFileName);
                     downloadFiles.add(localDir.endsWith(File.separator) ? localDir + localFileName : localDir + File.separator + localFileName);
                     break;
                 }
             } catch (Exception e) {
                 String decodeCurrentUrl = Util.decode(currentUrl);
                 if (i < 2) {
-                    log.warn("第{}次下载{}失败", i + 1, decodeCurrentUrl + localFileName);
+                    log.debug("第{}次下载{}失败", i + 1, decodeCurrentUrl + localFileName);
                     Util.sleep(1);
                 } else {
                     log.warn("第{}次下载{}还是失败，放弃", i + 1, decodeCurrentUrl + localFileName);
@@ -396,7 +396,7 @@ public class SyncService {
             remoteLastModified = remoteLastModified + 28800000;
         }
         if (remoteLastModified > localLastModified) {
-            log.info("更新文件localDir:{} localFileName: {}", localDir, localFileName);
+            log.debug("更新文件localDir:{} localFileName: {}", localDir, localFileName);
         }
         return remoteLastModified > localLastModified;
 
@@ -422,7 +422,7 @@ public class SyncService {
 
             //任务为空就关闭连接池
             if (executorService.getActiveCount() == 0 && pool.getQueue().isEmpty()) {
-                log.info("No tasks are currently executing, shutting down executorService thread pool...");
+                log.debug("No tasks are currently executing, shutting down executorService thread pool...");
                 executorService.shutdown();
                 try {
                     if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
@@ -434,11 +434,11 @@ public class SyncService {
                 }
                 if (!downloadFiles.isEmpty()) {
                     Collections.sort(downloadFiles);
-                    log.info("以下是下载的文件");
+                    log.debug("以下是下载的文件");
                     for (String fileName : downloadFiles) {
-                        log.info(fileName);
+                        log.debug(fileName);
                     }
-                    log.info("以上是下载的文件");
+                    log.debug("以上是下载的文件");
                     log.info("共下载{}个文件", downloadFiles.size());
                     Util.sendTgMsg("共下载" + downloadFiles.size() + "个文件");
                 } else {
@@ -464,7 +464,7 @@ public class SyncService {
         }
 
         if (pool.getActiveCount() == 0 && pool.getQueue().isEmpty()) {
-            log.info("No tasks are currently executing, shutting down thread pool...");
+            log.debug("No tasks are currently executing, shutting down thread pool...");
             pool.shutdown();
             try {
                 if (!pool.awaitTermination(60, TimeUnit.SECONDS)) {
@@ -474,7 +474,7 @@ public class SyncService {
                 pool.shutdownNow();
                 Thread.currentThread().interrupt();
             }
-            log.info("媒体库同步任务完成，已释放内存空间");
+            log.debug("媒体库同步任务完成，已释放内存空间");
 
         }
 
