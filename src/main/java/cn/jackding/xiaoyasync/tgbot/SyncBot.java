@@ -46,7 +46,6 @@ public class SyncBot extends AbilityBot {
                     SyncService syncService = (SyncService) SpringContextUtil.getBean("syncService");
                     syncService.syncFilesDaily();
                 })
-                .post(ctx -> silent.send("==执行同步任务完成==", ctx.chatId()))
                 .build();
     }
 
@@ -74,7 +73,6 @@ public class SyncBot extends AbilityBot {
                     SyncService syncService = (SyncService) SpringContextUtil.getBean("syncService");
                     syncService.syncFiles(parameter);
                 })
-                .post(ctx -> silent.send("==执行同步指定路径任务完成==", ctx.chatId()))
                 .build();
     }
 
