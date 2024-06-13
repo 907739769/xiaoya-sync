@@ -285,8 +285,10 @@ public class SyncService {
         //如果失败尝试获取三次
         for (int i = 0; ; i++) {
             try (Response getResponse = client.newCall(getRequest).execute()) {
-                if (!getResponse.isSuccessful()) {
-                    log.error(getResponse.body().string());
+                if (!getResponse.isSuccessful() || null == getResponse.body()) {
+                    if (null != getResponse.body()) {
+                        log.error(getResponse.body().string());
+                    }
                     throw new RuntimeException();
                 }
                 // 创建 Matcher 对象
