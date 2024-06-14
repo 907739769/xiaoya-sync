@@ -21,7 +21,7 @@ public class XiaoyaSyncApplication {
     @Value("${runAfterStartup:1}")
     private String runAfterStartup;
 
-    @Value("${logLevel}")
+    @Value("${logLevel:}")
     private String logLevel;
 
 

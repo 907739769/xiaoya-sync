@@ -403,9 +403,9 @@ public class SyncService {
     }
 
     /**
-     * 定时任务每20秒执行一次
+     * 定时任务每60秒执行一次
      */
-    @Scheduled(fixedRate = 20000, initialDelay = 20000)
+    @Scheduled(fixedRate = 60000, initialDelay = 60000)
     public void checkThreadPoolStatus() {
 
         if (null == executorService || null == pool) {
@@ -434,7 +434,7 @@ public class SyncService {
                 log.info("没有新的内容更新");
                 Util.sendTgMsg("没有新的内容更新");
             }
-            long milliseconds = (System.currentTimeMillis() - currentTimeMillis) < 40000 ? (System.currentTimeMillis() - currentTimeMillis) : (System.currentTimeMillis() - currentTimeMillis - 40000);
+            long milliseconds = (System.currentTimeMillis() - currentTimeMillis) < 60000 ? (System.currentTimeMillis() - currentTimeMillis) : (System.currentTimeMillis() - currentTimeMillis - 60000);
             long hours = TimeUnit.MILLISECONDS.toHours(milliseconds);
             long minutes = TimeUnit.MILLISECONDS.toMinutes(milliseconds) - TimeUnit.HOURS.toMinutes(hours);
             long seconds = TimeUnit.MILLISECONDS.toSeconds(milliseconds) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds));
