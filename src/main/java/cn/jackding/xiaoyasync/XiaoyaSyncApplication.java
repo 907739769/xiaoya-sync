@@ -41,12 +41,12 @@ public class XiaoyaSyncApplication {
             if (StringUtils.isNotBlank(logLevel)) {
                 Configurator.setAllLevels(LogManager.getRootLogger().getName(), Level.valueOf(logLevel));
             }
-            Util.initBot();
             if ("1".equals(runAfterStartup)) {
                 syncService.syncFilesDaily();
             } else {
                 log.info("启动立即执行任务未启用，等待定时任务处理");
             }
+            Util.initBot();
         };
     }
 
