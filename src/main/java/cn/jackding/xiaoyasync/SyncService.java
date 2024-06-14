@@ -42,7 +42,7 @@ public class SyncService {
     @Value("${syncUrl}")
     private String baseUrl;
 
-    private volatile String useBaseUrl;
+    private String useBaseUrl;
 
     @Value("${mediaLibDir}")
     private String localDir;
@@ -229,7 +229,7 @@ public class SyncService {
         }
         // 创建 OkHttpClient 实例
         if (null == connectionPool) {
-            connectionPool = new ConnectionPool(60, 10, TimeUnit.MINUTES);
+            connectionPool = new ConnectionPool(60, 30, TimeUnit.SECONDS);
         }
         if (null == client) {
             client = new OkHttpClient.Builder()
@@ -251,7 +251,7 @@ public class SyncService {
         }
         //本地路径加上分隔符
         localDir = localDir.endsWith(File.separator) ? localDir : localDir + File.separator;
-        //如果是这两个网站 同步的文件会多一些
+        //如果是这些网站 同步的文件会多一些
         if (allBaseUrl.contains(useBaseUrl)) {
             syncList = Arrays.asList("每日更新/.*,电影/.*,纪录片（已刮削）/.*,音乐/.*,PikPak/.*,动漫/.*,电视剧/.*,纪录片/.*,综艺/.*,\uD83D\uDCFA画质演示测试（4K，8K，HDR，Dolby）/".split(","));
         }
@@ -412,26 +412,12 @@ public class SyncService {
         if (null == executorService || null == pool) {
             return;
         }
-
-        //同步线程池已关闭
-//        if (pool.isTerminated() || pool.isShutdown()) {
-        //再看看下载线程池是否关闭
+        //线程池是否关闭
         if (executorService.isTerminated() || executorService.isShutdown() || pool.isTerminated() || pool.isShutdown()) {
             return;
         }
 
-        //任务为空就关闭连接池
         if (pool.getActiveCount() == 0 && pool.getQueue().isEmpty() && executorService.getActiveCount() == 0 && executorService.getQueue().isEmpty()) {
-//            log.debug("No tasks are currently executing, shutting down executorService thread pool...");
-//                executorService.shutdown();
-//                try {
-//                    if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
-//                        executorService.shutdownNow();
-//                    }
-//                } catch (InterruptedException e) {
-//                    executorService.shutdownNow();
-//                    Thread.currentThread().interrupt();
-//                }
             if (!downloadFiles.isEmpty()) {
                 Collections.sort(downloadFiles);
                 log.debug("以下是下载的文件");
@@ -454,30 +440,8 @@ public class SyncService {
             currentTimeMillis = 0;
             downloadFiles.clear();
             downloadFiles = null;
-//                executorService = null;
-//                pool = null;
-//                client = null;
-//                connectionPool = null;
             run = null;
         }
-//            return;
-
-//        }
-
-//        if (pool.getActiveCount() == 0 && pool.getQueue().isEmpty()) {
-//            log.debug("No tasks are currently executing, shutting down thread pool...");
-//            pool.shutdown();
-//            try {
-//                if (!pool.awaitTermination(60, TimeUnit.SECONDS)) {
-//                    pool.shutdownNow();
-//                }
-//            } catch (InterruptedException e) {
-//                pool.shutdownNow();
-//                Thread.currentThread().interrupt();
-//            }
-//            log.debug("媒体库同步任务完成，已释放内存空间");
-
-//        }
 
     }
 
