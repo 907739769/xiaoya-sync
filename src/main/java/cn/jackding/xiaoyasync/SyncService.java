@@ -403,48 +403,79 @@ public class SyncService {
     }
 
     /**
-     * 定时任务每60秒执行一次
+     * 定时任务每20秒执行一次
      */
-    @Scheduled(fixedRate = 60000, initialDelay = 60000)
+    @Scheduled(fixedRate = 20000, initialDelay = 20000)
     public void checkThreadPoolStatus() {
 
         if (null == executorService || null == pool) {
             return;
         }
-        //线程池是否关闭
-        if (executorService.isTerminated() || executorService.isShutdown() || pool.isTerminated() || pool.isShutdown()) {
-            return;
-        }
 
-        if (!"1".equals(run)) {
-            return;
-        }
-
-        if (pool.getActiveCount() == 0 && pool.getQueue().isEmpty() && executorService.getActiveCount() == 0 && executorService.getQueue().isEmpty()) {
-            if (!downloadFiles.isEmpty()) {
-                Collections.sort(downloadFiles);
-                log.debug("以下是下载的文件");
-                for (String fileName : downloadFiles) {
-                    log.debug(fileName);
-                }
-                log.debug("以上是下载的文件");
-                log.info("共下载{}个文件", downloadFiles.size());
-                Util.sendTgMsg("共下载" + downloadFiles.size() + "个文件");
-            } else {
-                log.info("没有新的内容更新");
-                Util.sendTgMsg("没有新的内容更新");
+        //同步线程池已关闭
+        if (pool.isTerminated() || pool.isShutdown()) {
+            //再看看下载线程池是否关闭
+            if (executorService.isTerminated() || executorService.isShutdown()) {
+                return;
             }
-            long milliseconds = (System.currentTimeMillis() - currentTimeMillis) < 60000 ? (System.currentTimeMillis() - currentTimeMillis) : (System.currentTimeMillis() - currentTimeMillis - 60000);
-            long hours = TimeUnit.MILLISECONDS.toHours(milliseconds);
-            long minutes = TimeUnit.MILLISECONDS.toMinutes(milliseconds) - TimeUnit.HOURS.toMinutes(hours);
-            long seconds = TimeUnit.MILLISECONDS.toSeconds(milliseconds) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds));
-            log.info("媒体库同步任务全部完成耗时：{}小时{}分钟{}秒", hours, minutes, seconds);
-            Util.sendTgMsg("媒体库同步任务全部完成耗时：" + hours + "小时" + minutes + "分钟" + seconds + "秒");
-            currentTimeMillis = 0;
-            downloadFiles.clear();
-            downloadFiles = null;
-            run = null;
-            System.gc();
+
+            //任务为空就关闭连接池
+            if (executorService.getActiveCount() == 0 && pool.getQueue().isEmpty()) {
+                log.debug("No tasks are currently executing, shutting down executorService thread pool...");
+                executorService.shutdown();
+                try {
+                    if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+                        executorService.shutdownNow();
+                    }
+                } catch (InterruptedException e) {
+                    executorService.shutdownNow();
+                    Thread.currentThread().interrupt();
+                }
+                if (!downloadFiles.isEmpty()) {
+                    Collections.sort(downloadFiles);
+                    log.debug("以下是下载的文件");
+                    for (String fileName : downloadFiles) {
+                        log.debug(fileName);
+                    }
+                    log.debug("以上是下载的文件");
+                    log.info("共下载{}个文件", downloadFiles.size());
+                    Util.sendTgMsg("共下载" + downloadFiles.size() + "个文件");
+                } else {
+                    log.info("没有新的内容更新");
+                    Util.sendTgMsg("没有新的内容更新");
+                }
+                long milliseconds = (System.currentTimeMillis() - currentTimeMillis) < 40000 ? (System.currentTimeMillis() - currentTimeMillis) : (System.currentTimeMillis() - currentTimeMillis - 40000);
+                long hours = TimeUnit.MILLISECONDS.toHours(milliseconds);
+                long minutes = TimeUnit.MILLISECONDS.toMinutes(milliseconds) - TimeUnit.HOURS.toMinutes(hours);
+                long seconds = TimeUnit.MILLISECONDS.toSeconds(milliseconds) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milliseconds));
+                log.info("媒体库同步任务全部完成耗时：{}小时{}分钟{}秒", hours, minutes, seconds);
+                Util.sendTgMsg("媒体库同步任务全部完成耗时：" + hours + "小时" + minutes + "分钟" + seconds + "秒");
+                currentTimeMillis = 0;
+                downloadFiles = null;
+                executorService = null;
+                pool = null;
+                client = null;
+                connectionPool = null;
+                run = null;
+                System.gc();
+            }
+            return;
+
+        }
+
+        if (pool.getActiveCount() == 0 && pool.getQueue().isEmpty()) {
+            log.debug("No tasks are currently executing, shutting down thread pool...");
+            pool.shutdown();
+            try {
+                if (!pool.awaitTermination(60, TimeUnit.SECONDS)) {
+                    pool.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                pool.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+            log.debug("媒体库同步任务完成，已释放内存空间");
+
         }
 
     }
