@@ -444,6 +444,7 @@ public class SyncService {
             downloadFiles.clear();
             downloadFiles = null;
             run = null;
+            System.gc();
         }
 
     }
