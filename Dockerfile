@@ -8,7 +8,6 @@ VOLUME /log
 ENV TZ=Asia/Shanghai
 ENV runAfterStartup="0"
 ENV excludeList=""
-ENV threadPoolNum="99"
 ENV syncUrl=""
 ENV syncDir=""
 ENV tgToken=""

@@ -1,26 +1,18 @@
 # xiaoya-sync
 
-注意，这个docker容器运行任务期间会占用500MB的内存
+注意，这个docker容器运行任务期间会占用300MB-700MB的内存
 
-同步小雅emby媒体库，每天早上晚上六点同步，服务启动也会执行一次。扫描一次大概10分钟。
+同步小雅emby媒体库，每天早上晚上六点同步，服务启动也会执行一次。扫描一次大概30秒钟。
+每三天同步一次全量数据，扫描下载一次大概两三个小时，具体看有多少更新文件。
 
 自动删除本地过时文件夹及文件（小雅媒体库网站不存在的文件及文件夹，不会删除其他目录的文件），网站上面文件的和本地
 同名文件不会删除，防止网站没有nfo等文件，但是本地有nfo等文件，导致误删nfo等文件
 
-`https://emby.xiaoya.pro/`
 
-上面这个网站同步以下指定文件夹：
-```
-每日更新/
-电影/2023/
-纪录片（已刮削）/
-音乐/演唱会/
-音乐/狄更斯：音乐剧 (2023)/
-```
 
-`https://icyou.eu.org/` `https://lanyuewan.cn/` `https://emby.8.net.co/` `https://emby.raydoom.tk/` `https://emby.kaiserver.uk/` `https://embyxiaoya.laogl.top/`
+`https://emby.xiaoya.pro/` `https://icyou.eu.org/` `https://lanyuewan.cn/` `https://emby.8.net.co/` `https://emby.raydoom.tk/` `https://emby.kaiserver.uk/` `https://embyxiaoya.laogl.top/`
 
-以上两个网站会同步以下指定目录
+以上网站会同步以下指定目录
 
 ```
 每日更新/
@@ -67,11 +59,13 @@ PikPak/
 可选参数
 runAfterStartup  启动是否立即执行同步任务 默认不启用0，启用填1
 excludeList 排除列表 默认为空 设置不进行同步及删除的目录例如每日更新/动漫/.*,每日更新/动漫剧场版/.*
-syncUrl 同步网站 默认从网站池中随机选一个  可选https://icyou.eu.org/或者https://lanyuewan.cn/
+syncUrl 同步网站 不填默认从网站池中随机选一个  可选https://icyou.eu.org/或者https://lanyuewan.cn/
 syncDir 同步路径 指定同步路径 默认空 同步全站，可填入 每日更新/电影/ 或者 每日更新/  等具体的网站路径
-threadPoolNum 设置线程数默认99 不建议修改
 tgToken  tg机器人token，通过t.me/BotFather机器人创建bot获取token
 tgUserId tg用户id，通过t.me/userinfobot机器人获取userId
+tgUserName tg机器人名称 可不填
+logLevel 日志级别 DEBUG INFO ERROR OFF
+JAVA_OPTS 设置JVM参数  默认-Xms32m -Xmx512m
 ```
 
 一键命令部署
