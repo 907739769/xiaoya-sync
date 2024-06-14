@@ -25,7 +25,7 @@ public class SyncBot extends AbilityBot {
     private final ResponseHandler responseHandler = new ResponseHandler(sender, db);
 
     public SyncBot() {
-        super(Config.tgToken, "");
+        super(Config.tgToken, "bot");
     }
 
     public SyncBot(DefaultBotOptions options) {
