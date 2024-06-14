@@ -15,6 +15,8 @@ public class Config {
 
     public static String tgUserId;
 
+    public static String tgUserName;
+
     @Value("${tgToken}")
     public void setTgToken(String tgToken) {
         Config.tgToken = tgToken;
@@ -23,6 +25,11 @@ public class Config {
     @Value("${tgUserId}")
     public void setTgUserId(String tgUserId) {
         Config.tgUserId = tgUserId;
+    }
+
+    @Value("${tgUserName:bot}")
+    public void setTgUserName(String tgUserName) {
+        Config.tgUserName = tgUserName;
     }
 
 }

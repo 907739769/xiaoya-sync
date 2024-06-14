@@ -24,12 +24,8 @@ public class SyncBot extends AbilityBot {
 
     private final ResponseHandler responseHandler = new ResponseHandler(sender, db);
 
-    public SyncBot() {
-        super(Config.tgToken, "bot");
-    }
-
     public SyncBot(DefaultBotOptions options) {
-        super(Config.tgToken, "bot", options);
+        super(Config.tgToken, Config.tgUserName, options);
     }
 
     @Override
@@ -76,8 +72,7 @@ public class SyncBot extends AbilityBot {
                     SyncService syncService = (SyncService) SpringContextUtil.getBean("syncService");
                     syncService.syncFiles(parameter);
                 })
-                .reply((bot, upd) -> responseHandler.replyToSyncDdir(getChatId(upd), upd.getMessage().getText(), upd.getMessage().getMessageId()), Flag.REPLY//回复
-                        , upd -> upd.getMessage().getReplyToMessage().getFrom().getUserName().equalsIgnoreCase(getBotUsername()),//回复的是机器人
+                .reply((bot, upd) -> responseHandler.replyToSyncDdir(getChatId(upd), upd.getMessage().getText(), upd.getMessage().getMessageId()), Flag.REPLY,//回复
                         upd -> upd.getMessage().getReplyToMessage().hasText(), upd -> upd.getMessage().getReplyToMessage().getText().equals("请输入路径")//回复的是上面的问题
                 )
                 .build();
