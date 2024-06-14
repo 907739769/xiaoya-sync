@@ -404,7 +404,6 @@ public class SyncService {
 
     /**
      * 定时任务每20秒执行一次
-     * 销毁线程池 释放内存
      */
     @Scheduled(fixedRate = 20000, initialDelay = 20000)
     public void checkThreadPoolStatus() {
@@ -414,6 +413,10 @@ public class SyncService {
         }
         //线程池是否关闭
         if (executorService.isTerminated() || executorService.isShutdown() || pool.isTerminated() || pool.isShutdown()) {
+            return;
+        }
+
+        if (!"1".equals(run)) {
             return;
         }
 
