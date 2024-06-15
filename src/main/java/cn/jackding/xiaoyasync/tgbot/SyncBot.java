@@ -61,7 +61,6 @@ public class SyncBot extends AbilityBot {
                         parameter = ctx.firstArg();
                     } catch (Exception e) {
                         silent.forceReply("请输入路径", ctx.chatId());
-                        log.error("", e);
                         return;
                     }
                     if (StringUtils.isBlank(parameter)) {
