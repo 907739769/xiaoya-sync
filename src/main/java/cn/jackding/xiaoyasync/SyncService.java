@@ -87,6 +87,7 @@ public class SyncService {
      * 同步媒体库
      */
     public void syncFiles(String syncDir) {
+        syncDir = syncDir.startsWith("/") ? (syncDir.length() > 1 ? syncDir.substring(1) : "") : syncDir;
         if ("1".equals(run)) {
             log.debug("任务正在执行中");
             Util.sendTgMsg("任务正在执行中");
