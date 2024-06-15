@@ -378,9 +378,6 @@ public class SyncService {
 
     private boolean isRemoteFileUpdated(String remoteFileDate, String localDir, String localFileName) {
         File localFile = new File(localDir, localFileName);
-        if (localFile.length() < 10) {
-            return true;
-        }
         long localLastModified = localFile.lastModified();
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy hh:mm", Locale.ENGLISH);
