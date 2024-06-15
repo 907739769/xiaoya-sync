@@ -8,9 +8,8 @@
 自动删除本地过时文件夹及文件（小雅媒体库网站不存在的文件及文件夹，不会删除其他目录的文件），网站上面文件的和本地
 同名文件不会删除，防止网站没有nfo等文件，但是本地有nfo等文件，导致误删nfo等文件
 
-
-
 `https://emby.xiaoya.pro/` `https://icyou.eu.org/` `https://lanyuewan.cn/` `https://emby.8.net.co/` `https://emby.raydoom.tk/` `https://emby.kaiserver.uk/` `https://embyxiaoya.laogl.top/`
+`https://emby-data.raydoom.tk/` `https://emby-data.5168168.xyz/` `https://emby-data.ermaokj.com/` `https://emby-data.tmxy.pp.ua/` `https://emby-data.poxi1221.eu.org/`
 
 以上网站会同步以下指定目录
 
@@ -46,7 +45,7 @@ PikPak/
 20240526 每日任务增加启动任务前的一分钟内随机等待时间、修改同步全量文件的频次为每三天
 20240529 保留两天日志、增加启动内存参数设置、完成时间打印优化
 20240604 增加tg消息推送文件同步情况、机器人命令手动执行任务，新增参数tgToken、tgUserId，机器人命令包括/sync和/syncdir,syncdir后面追加指定路径参数可以同步指定路径数据,例如/syncdir 每日更新/电影/中国/
-
+20240614 优化内存占用，减少无任务期间内存占用
 ```
 
 ## docker部署 
