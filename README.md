@@ -46,6 +46,7 @@ PikPak/
 20240529 保留两天日志、增加启动内存参数设置、完成时间打印优化
 20240604 增加tg消息推送文件同步情况、机器人命令手动执行任务，新增参数tgToken、tgUserId，机器人命令包括/sync和/syncdir,syncdir后面追加指定路径参数可以同步指定路径数据,例如/syncdir 每日更新/电影/中国/
 20240614 优化内存占用，减少无任务期间内存占用
+20240629 增加是否重新下载本地0KB大小的文件 默认不启用0，启用填1
 ```
 
 ## docker部署 
@@ -65,6 +66,7 @@ tgUserId tg用户id，通过t.me/userinfobot机器人获取userId
 tgUserName tg机器人名称 可不填
 logLevel 日志级别 DEBUG INFO ERROR OFF
 JAVA_OPTS 设置JVM参数  默认-Xms32m -Xmx512m
+retryDownEmptyFile 是否重新下载本地0KB大小的文件 默认不启用0，启用填1
 ```
 
 一键命令部署

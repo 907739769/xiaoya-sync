@@ -56,6 +56,9 @@ public class SyncService {
     @Value("${syncDir}")
     private String syncDir;
 
+    @Value("${retryDownEmptyFile:0}")
+    private String retryDownEmptyFile;
+
     //在这个列表里面的就会执行删除操作
     private List<String> syncList = Arrays.asList("每日更新/.*,电影/2023/.*,纪录片（已刮削）/.*,音乐/演唱会/.*,音乐/狄更斯：音乐剧 (2023)/.*".split(","));
 
@@ -379,7 +382,9 @@ public class SyncService {
     private boolean isRemoteFileUpdated(String remoteFileDate, String localDir, String localFileName) {
         File localFile = new File(localDir, localFileName);
         long localLastModified = localFile.lastModified();
-
+        if (localFile.length() == 0 && "1".equals(retryDownEmptyFile)) {
+            return true;
+        }
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy hh:mm", Locale.ENGLISH);
         Date date;
         try {
